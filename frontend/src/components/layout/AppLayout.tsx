@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 
+// Layout base da área autenticada.
+// `Outlet` renderiza a página atual mantendo navegação lateral fixa.
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

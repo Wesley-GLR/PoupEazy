@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabase'
 import type { Meta } from '../types/database'
 import { useAuth } from './useAuth'
 
+// Hook de metas financeiras (CRUD e sincronização local após mutações).
 export function useGoals() {
   const { user } = useAuth()
   const [goals, setGoals] = useState<Meta[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Ordenação por prazo facilita priorização de metas mais próximas do vencimento.
   const fetch = useCallback(async () => {
     if (!user) return
     setLoading(true)

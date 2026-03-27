@@ -7,6 +7,8 @@ import PieChart from '../components/charts/PieChart'
 import { formatCurrency, formatDate } from '../lib/format'
 import { TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
 
+// Painel consolidado do mês atual:
+// usa transações confirmadas para evitar distorção de dados pendentes/cancelados.
 export default function Dashboard() {
   const { profile } = useAuth()
   const { transactions, loading: txLoading } = useTransactions()
@@ -18,6 +20,7 @@ export default function Dashboard() {
 
   const currentBudget = budgets.find(b => b.mes === currentMonth && b.ano === currentYear)
 
+  // Recorte mensal da movimentação confirmada (base para cards e gráficos).
   const monthTx = useMemo(() =>
     transactions.filter(t => {
       const d = new Date(t.data_transacao + 'T00:00:00')
@@ -30,6 +33,7 @@ export default function Dashboard() {
   const totalDespesas = monthTx.filter(t => t.tipo === 'despesa').reduce((s, t) => s + Number(t.valor), 0)
   const saldo = totalReceitas - totalDespesas
 
+  // Agregação por categoria de despesa para visualização em pizza.
   const categoryData = useMemo(() => {
     const map = new Map<string, number>()
     monthTx.filter(t => t.tipo === 'despesa').forEach(t => {

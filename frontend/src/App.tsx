@@ -11,6 +11,9 @@ import Categories from './pages/Categories'
 import Goals from './pages/Goals'
 import Budget from './pages/Budget'
 
+// Guardião de rotas privadas:
+// só libera a renderização quando o estado de autenticação já foi resolvido.
+// Enquanto carrega, exibe um spinner para evitar "piscar" de páginas indevidas.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
@@ -26,6 +29,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// Guardião de rotas públicas:
+// impede que usuário já autenticado volte para login/cadastro.
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
@@ -41,6 +46,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// Regra da home:
+// usuário autenticado vai direto para o painel; visitante vê landing page.
 function LandingRoute() {
   const { user, loading } = useAuth()
   if (loading) {
@@ -56,13 +63,16 @@ function LandingRoute() {
 
 export default function App() {
   return (
+    // AuthProvider disponibiliza sessão, usuário e perfil para toda a árvore.
     <AuthProvider>
       <Routes>
+        {/* Rotas de autenticação (acessíveis apenas sem sessão ativa). */}
         <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
         </Route>
 
+        {/* Rotas principais do produto (exigem sessão ativa). */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/transacoes" element={<Transactions />} />
@@ -71,6 +81,7 @@ export default function App() {
           <Route path="/orcamento" element={<Budget />} />
         </Route>
 
+        {/* Fallback de navegação: home inteligente + redirecionamento de rotas inválidas. */}
         <Route path="/" element={<LandingRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

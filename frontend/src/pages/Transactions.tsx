@@ -8,6 +8,8 @@ import { formatCurrency, formatDate } from '../lib/format'
 import { Plus, Pencil, Trash2, Search, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Tela de transações:
+// concentra CRUD e garante que toda transação esteja vinculada a um orçamento mensal.
 export default function Transactions() {
   const { user } = useAuth()
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } = useTransactions()
@@ -24,6 +26,7 @@ export default function Transactions() {
   const [categoriaId, setCategoriaId] = useState('')
   const [dataTransacao, setDataTransacao] = useState(new Date().toISOString().split('T')[0])
 
+  // Filtro local para busca textual + filtro de tipo sem nova consulta ao banco.
   const filteredTx = useMemo(() =>
     transactions.filter(tx => {
       const matchSearch = tx.descricao.toLowerCase().includes(search.toLowerCase())
@@ -33,6 +36,8 @@ export default function Transactions() {
     [transactions, search, filterType]
   )
 
+  // Regras de categoria por tipo de lançamento:
+  // receita só aceita categoria de receita; despesa aceita fixa/variável.
   const filteredCategories = useMemo(() =>
     categories.filter(c => {
       if (tipo === 'receita') return c.tipo === 'receita'
@@ -71,6 +76,7 @@ export default function Transactions() {
     e.preventDefault()
     if (!user) return
 
+    // Regra central: transação sempre aponta para um orçamento (mês/ano da data escolhida).
     const d = new Date(dataTransacao + 'T00:00:00')
     const budget = await getOrCreateBudget(d.getMonth() + 1, d.getFullYear())
     if (!budget) {
@@ -78,6 +84,7 @@ export default function Transactions() {
       return
     }
 
+    // Payload explícito mantém compatibilidade com regras de trigger e relatórios no banco.
     const payload = {
       descricao,
       valor: parseFloat(valor),

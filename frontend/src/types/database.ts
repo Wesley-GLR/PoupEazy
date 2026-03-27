@@ -1,3 +1,5 @@
+// Contrato tipado do schema `public` usado no frontend.
+// Este arquivo é a "fonte de verdade" para shape de dados vindos do Supabase.
 export interface Database {
   public: {
     Tables: {
@@ -45,6 +47,8 @@ export interface Database {
   }
 }
 
+// Perfil complementar do usuário autenticado.
+// O id é o mesmo usuário do Supabase Auth (auth.users).
 export interface Profile {
   id: string
   nome: string
@@ -53,6 +57,8 @@ export interface Profile {
   atualizado_em: string
 }
 
+// Meta financeira definida pelo usuário.
+// `valor_atual` é atualizado por trigger com base nas despesas associadas.
 export interface Meta {
   id: string
   id_usuario: string
@@ -65,6 +71,8 @@ export interface Meta {
   criado_em: string
 }
 
+// Orçamento mensal por usuário (chave lógica: usuário + mês + ano).
+// `valor_real` é derivado automaticamente das transações confirmadas.
 export interface Orcamento {
   id: string
   id_usuario: string
@@ -76,6 +84,9 @@ export interface Orcamento {
   atualizado_em: string
 }
 
+// Categoria de transação:
+// - sistema=true: categoria nativa protegida;
+// - id_usuario preenchido: categoria personalizada do usuário.
 export interface Categoria {
   id: string
   id_usuario: string | null
@@ -85,6 +96,8 @@ export interface Categoria {
   sistema: boolean
 }
 
+// Registro de transação financeira (despesa/receita).
+// Campos `origem` e `status` permitem integrações futuras e fluxo de confirmação.
 export interface Despesa {
   id: string
   id_orcamento: string
@@ -100,6 +113,7 @@ export interface Despesa {
   criado_em: string
 }
 
+// Notificação exibida ao usuário (limite, meta, dica, relatório).
 export interface Notificacao {
   id: string
   id_usuario: string
@@ -110,6 +124,7 @@ export interface Notificacao {
   criado_em: string
 }
 
+// Tokens para integração Open Finance (armazenamento preparado para evolução futura).
 export interface OpenFinanceToken {
   id: string
   id_usuario: string
@@ -122,6 +137,7 @@ export interface OpenFinanceToken {
   criado_em: string
 }
 
+// View analítica: consolida despesas confirmadas por categoria e mês.
 export interface ResumoMensal {
   id_usuario: string
   usuario_nome: string
@@ -136,6 +152,7 @@ export interface ResumoMensal {
   pct_orcamento_consumido: number | null
 }
 
+// View analítica: progresso e situação operacional das metas ativas.
 export interface ProgressoMeta {
   id_meta: string
   id_usuario: string
@@ -149,6 +166,7 @@ export interface ProgressoMeta {
   situacao: string
 }
 
+// View analítica: comparação entre planejado vs real ao longo dos meses.
 export interface HistoricoComparativo {
   id_usuario: string
   ano: number
@@ -162,6 +180,7 @@ export interface HistoricoComparativo {
   pct_variacao_mom: number | null
 }
 
+// Shape usado na UI quando a transação precisa vir com dados da categoria em join.
 export interface DespesaComCategoria extends Despesa {
   categoria?: Categoria
 }

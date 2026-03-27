@@ -7,6 +7,7 @@ interface CardProps {
   className?: string
 }
 
+// Componente de card genérico para padronizar visual de blocos da aplicação.
 export default function Card({ title, subtitle, children, className = '' }: CardProps) {
   return (
     <div className={`rounded-lg border border-border bg-surface-card p-6 shadow-sm ${className}`}>

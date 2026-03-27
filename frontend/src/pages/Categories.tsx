@@ -8,6 +8,7 @@ import { formatCurrency } from '../lib/format'
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Mapeamento de tipo técnico -> rótulo amigável exibido na UI.
 const TIPO_LABELS: Record<string, string> = {
   despesa_fixa: 'Despesa Fixa',
   despesa_variavel: 'Despesa Variável',
@@ -25,6 +26,7 @@ export default function Categories() {
   const [tipo, setTipo] = useState<'despesa_fixa' | 'despesa_variavel' | 'receita'>('despesa_variavel')
   const [icone, setIcone] = useState('')
 
+  // Gráfico de distribuição considera apenas despesas confirmadas.
   const chartData = useMemo(() => {
     const map = new Map<string, number>()
     transactions
@@ -54,6 +56,7 @@ export default function Categories() {
 
   function openEdit(id: string) {
     const cat = categories.find(c => c.id === id)
+    // Categoria nativa não pode ser alterada no frontend nem no banco (trigger/policy).
     if (!cat || cat.sistema) return
     setNome(cat.nome)
     setTipo(cat.tipo)

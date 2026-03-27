@@ -5,6 +5,8 @@ interface PieChartProps {
   data: { name: string; value: number }[]
 }
 
+// Gráfico de participação por categoria.
+// Usa paleta fixa para manter consistência visual entre páginas.
 export default function PieChart({ data }: PieChartProps) {
   if (!data.length) {
     return <p className="py-8 text-center text-muted">Nenhum dado disponível</p>
