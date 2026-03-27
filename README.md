@@ -148,6 +148,10 @@ PoupEazy/
 | Heitor Martins Colombino          | Gerente/Dev     |
 | Matheus Idjarurir Santos Miranda  | Analista/Dev    |
 | Pedro Mello Morais                | Desenvolvedor   |
+| Matheus de Oliveira Barbosa       | Desenvolvedor   |
+| Wesley Gabriel Lima Rabelo        | Desenvolvedor   |
+| Vitor Hugo Peluchi Nascimento     | Desenvolvedor   |
+| Kleber Augusto Barbosa            | Desenvolvedor   |
 
 **Instituição:** UNIFEI - Universidade Federal de Itajubá, Campus Itabira
 
