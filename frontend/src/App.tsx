@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import AuthLayout from './components/layout/AuthLayout'
 import AppLayout from './components/layout/AppLayout'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -40,6 +41,19 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function LandingRoute() {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+  if (user) return <Navigate to="/dashboard" replace />
+  return <Landing />
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -57,7 +71,8 @@ export default function App() {
           <Route path="/orcamento" element={<Budget />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingRoute />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   )

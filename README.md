@@ -1,6 +1,6 @@
 # PoupEazy - Gestão Financeira Pessoal
 
-Sistema web de gerenciamento financeiro pessoal desenvolvido como projeto acadêmico para a disciplina de **Análise e Desenvolvimento de Software II** na **UNIFEI - Campus Itabira**.
+Sistema web de gerenciamento financeiro pessoal desenvolvido como projeto acadêmico para a disciplina de **Análise e Desenvolvimento de Software III** na **UNIFEI - Campus Itabira**.
 
 O PoupEazy ajuda usuários a controlar gastos, definir metas financeiras e acompanhar orçamentos mensais de forma intuitiva e automatizada.
 
@@ -51,17 +51,7 @@ git clone https://github.com/seu-usuario/PoupEazy.git
 cd PoupEazy
 ```
 
-### 2. Configurar o banco de dados
-
-No painel do Supabase, abra o **SQL Editor** e execute o conteúdo do arquivo:
-
-```
-poupeazy_supabase.sql
-```
-
-Este script cria todas as tabelas, triggers, views, índices e políticas RLS.
-
-### 3. Configurar variáveis de ambiente
+### 2. Configurar variáveis de ambiente
 
 ```bash
 cd frontend
@@ -71,18 +61,19 @@ cp .env.example .env
 Edite o `.env` com as credenciais do seu projeto Supabase:
 
 ```
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui
+VITE_SUPABASE_URL= Link do seu projeto no supabase
+VITE_SUPABASE_ANON_KEY= Sua anon key
 ```
 
-### 4. Instalar dependências e rodar
+### 3. Instalar dependências e rodar
 
 ```bash
 npm install
 npm run dev
 ```
 
-O app estará disponível em `http://localhost:5173`.
+O app estará disponível no link localmente.
+O app está disponível em versão estável em: https://poup-eazy.vercel.app/
 
 ---
 
@@ -145,8 +136,8 @@ PoupEazy/
 | Nome                              | Função          |
 | --------------------------------- | --------------- |
 | Brendow Scarabelli Silveira       | Desenvolvedor   |
-| Heitor Martins Colombino          | Gerente/Dev     |
-| Matheus Idjarurir Santos Miranda  | Analista/Dev    |
+| Heitor Martins Colombino          | Desenvolvedor   |
+| Matheus Idjarurir Santos Miranda  | Desenvolvedor   |
 | Pedro Mello Morais                | Desenvolvedor   |
 | Matheus de Oliveira Barbosa       | Desenvolvedor   |
 | Wesley Gabriel Lima Rabelo        | Desenvolvedor   |
