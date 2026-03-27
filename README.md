@@ -106,9 +106,6 @@ PoupEazy/
 │   ├── index.html
 │   ├── vite.config.ts
 │   └── package.json
-├── Relatório Final de BD.pdf
-├── Relatório Final Revisado - Casos de Uso.pdf
-└── Relatório Final Revisado - Lista de Requisitos.pdf
 ```
 
 ---
