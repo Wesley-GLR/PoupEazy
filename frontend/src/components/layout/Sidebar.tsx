@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X } from 'lucide-react'
+import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import logoHorizontal from '../../assets/logo-horizontal.png'
 
 const navItems = [
   { to: '/dashboard', label: 'Painel', icon: Home },
   { to: '/transacoes', label: 'Transações', icon: RefreshCw },
   { to: '/categorias', label: 'Categorias', icon: Grid3X3 },
   { to: '/metas', label: 'Metas', icon: ArrowUpRight },
-  { to: '/orcamento', label: 'Orçamento', icon: ArrowUpRight },
+  { to: '/orcamento', label: 'Orçamento', icon: DollarSign },
 ]
 
 interface SidebarProps {
@@ -40,10 +41,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
         }`}
       >
         <div className="flex flex-col items-center gap-2">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-white font-heading">
-            P
-          </div>
-          <span className="text-3xl font-bold text-black">PoupEazy</span>
+          <img src={logoHorizontal} alt="PoupEazy" className="h-16 w-auto" />
           {profile?.nome && (
             <span className="text-sm text-muted">{profile.nome}</span>
           )}
