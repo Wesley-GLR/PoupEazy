@@ -95,9 +95,8 @@ O app está disponível em versão estável em: https://poup-eazy.vercel.app/
 - Em seguida leia `frontend/src/hooks` para entender as regras de negócio e acesso ao Supabase.
 - Depois veja `frontend/src/pages` para entender como os dados chegam na interface.
 - Use `frontend/src/types/database.ts` como contrato oficial de dados entre UI e banco.
+
 PoupEazy/
-├── poupeazy_supabase.sql          # DDL completo para Supabase
-├── poupeazy_ddl_completo.sql      # DDL original (referência)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
