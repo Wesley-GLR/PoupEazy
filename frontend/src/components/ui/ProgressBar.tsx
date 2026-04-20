@@ -4,6 +4,8 @@ interface ProgressBarProps {
   className?: string
 }
 
+// Barra de progresso percentual com clamp de segurança (0 a 100).
+// Cores padrão priorizam sinalização visual de atenção quando aproxima/ultrapassa limite.
 export default function ProgressBar({ percent, color, className = '' }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, percent))
 

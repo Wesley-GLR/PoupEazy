@@ -3,6 +3,8 @@ import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign } f
 import { useAuth } from '../../hooks/useAuth'
 import logoHorizontal from '../../assets/logo-horizontal.png'
 
+// Navegação principal da área logada.
+// Em telas pequenas funciona como drawer com overlay.
 const navItems = [
   { to: '/dashboard', label: 'Painel', icon: Home },
   { to: '/transacoes', label: 'Transações', icon: RefreshCw },
@@ -53,6 +55,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
               key={item.to}
               to={item.to}
               onClick={() => { if (window.innerWidth < 1024) onToggle() }}
+              // Fecha drawer no mobile ao navegar para melhorar UX.
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-4 py-3 text-lg font-medium font-heading transition ${
                   isActive

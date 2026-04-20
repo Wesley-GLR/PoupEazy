@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
+// Tela de login por e-mail/senha integrada ao Supabase Auth.
 export default function Login() {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')

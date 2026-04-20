@@ -14,6 +14,7 @@ interface BarChartProps {
   data: { name: string; planejado: number; real: number }[]
 }
 
+// Gráfico comparativo de orçamento planejado vs realizado.
 export default function BarChart({ data }: BarChartProps) {
   if (!data.length) {
     return <p className="py-8 text-center text-muted">Nenhum dado disponível</p>

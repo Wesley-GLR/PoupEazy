@@ -8,6 +8,8 @@ interface ModalProps {
   children: ReactNode
 }
 
+// Modal controlado:
+// quando aberto, bloqueia scroll do body para evitar rolagem da página ao fundo.
 export default function Modal({ open, onClose, title, children }: ModalProps) {
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'

@@ -7,6 +7,8 @@ import { formatCurrency, formatDate } from '../lib/format'
 import { Plus, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Tela de metas:
+// separa metas ativas e finalizadas para facilitar operação diária.
 export default function Goals() {
   const { user } = useAuth()
   const { goals, loading, addGoal, updateGoal, deleteGoal } = useGoals()
@@ -18,6 +20,7 @@ export default function Goals() {
   const [valorObjetivo, setValorObjetivo] = useState('')
   const [dataLimite, setDataLimite] = useState('')
 
+  // Metas ativas ficam no topo com ações rápidas.
   const activeGoals = goals.filter(g => g.status === 'ativa')
   const completedGoals = goals.filter(g => g.status !== 'ativa')
 
@@ -88,6 +91,7 @@ export default function Goals() {
     else toast.success('Meta excluída!')
   }
 
+  // Texto auxiliar para urgência de prazo.
   function getDaysLabel(dataLimite: string) {
     const diff = Math.ceil((new Date(dataLimite + 'T00:00:00').getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     if (diff < 0) return 'Vencida'

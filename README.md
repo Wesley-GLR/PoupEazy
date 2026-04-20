@@ -80,9 +80,23 @@ O app está disponível em versão estável em: https://poup-eazy.vercel.app/
 ## Estrutura do Projeto
 
 ```
+
+## Fluxo técnico da aplicação
+
+1. Usuário acessa o frontend React e passa pelo roteamento em `App.tsx`.
+2. `AuthProvider` valida sessão com Supabase Auth e disponibiliza `user/profile`.
+3. As páginas consomem hooks (`useTransactions`, `useBudget`, `useGoals`, `useCategories`) para ler/escrever dados no banco.
+4. O Supabase aplica regras de segurança (RLS), garantindo acesso somente aos dados do usuário autenticado.
+5. Triggers no banco recalculam automaticamente valores derivados (como `orcamento.valor_real` e `metas.valor_atual`).
+
+### Como navegar no código sem se perder
+
+- Comece por `frontend/src/main.tsx` e `frontend/src/App.tsx` para entender bootstrap e rotas.
+- Em seguida leia `frontend/src/hooks` para entender as regras de negócio e acesso ao Supabase.
+- Depois veja `frontend/src/pages` para entender como os dados chegam na interface.
+- Use `frontend/src/types/database.ts` como contrato oficial de dados entre UI e banco.
+
 PoupEazy/
-├── poupeazy_supabase.sql          # DDL completo para Supabase
-├── poupeazy_ddl_completo.sql      # DDL original (referência)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
+// Tela de cadastro com validações mínimas antes de criar conta no Auth.
 export default function Register() {
   const { signUp } = useAuth()
   const navigate = useNavigate()
@@ -18,6 +19,7 @@ export default function Register() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
+    // Validação local para evitar roundtrip desnecessário quando as senhas divergem.
     if (senha !== confirmarSenha) {
       toast.error('As senhas não coincidem.')
       return

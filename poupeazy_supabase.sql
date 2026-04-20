@@ -176,6 +176,10 @@ CREATE OR REPLACE TRIGGER trg_orcamento_atualizado_em
     FOR EACH ROW EXECUTE FUNCTION fn_set_atualizado_em();
 
 -- 8.2 Recalcular valor_real no Orcamento
+-- Regra de negócio:
+-- - despesas confirmadas somam positivamente;
+-- - receitas confirmadas reduzem o "gasto real" (subtração),
+-- permitindo que valor_real represente saldo líquido de execução do orçamento.
 CREATE OR REPLACE FUNCTION fn_sync_orcamento_valor_real()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
@@ -197,6 +201,8 @@ BEGIN
     )
     WHERE id = v_id_orcamento;
 
+    -- Quando uma transação muda de orçamento, também recalcula o orçamento antigo
+    -- para evitar inconsistência de agregação entre meses.
     IF TG_OP = 'UPDATE' AND NEW.id_orcamento IS DISTINCT FROM OLD.id_orcamento THEN
         UPDATE orcamento
         SET valor_real = (
@@ -218,6 +224,9 @@ CREATE OR REPLACE TRIGGER trg_orcamento_valor_real
     FOR EACH ROW EXECUTE FUNCTION fn_sync_orcamento_valor_real();
 
 -- 8.3 Recalcular valor_atual nas Metas
+-- Regra de negócio:
+-- `metas.valor_atual` é a soma das despesas confirmadas vinculadas à meta.
+-- Isso garante que o progresso mostrado na UI seja sempre derivado de transações reais.
 CREATE OR REPLACE FUNCTION fn_sync_metas_valor_atual()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
@@ -264,6 +273,8 @@ CREATE OR REPLACE TRIGGER trg_protege_categoria_sistema
     FOR EACH ROW EXECUTE FUNCTION fn_protege_categoria_sistema();
 
 -- 8.5 Criar profile automaticamente ao registrar usuário
+-- Objetivo:
+-- evitar usuário autenticado sem registro correspondente em `profiles`.
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -348,6 +359,9 @@ ORDER BY o.id_usuario, o.ano DESC, o.mes DESC;
 -- =============================================================================
 -- 11. ROW LEVEL SECURITY
 -- =============================================================================
+-- Observação importante de segurança:
+-- as policies abaixo são a principal barreira de isolamento entre usuários.
+-- Qualquer alteração incorreta aqui pode expor dados de terceiros.
 
 -- Profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -377,6 +391,9 @@ CREATE POLICY "categoria_update_own" ON categoria FOR UPDATE USING (auth.uid() =
 CREATE POLICY "categoria_delete_own" ON categoria FOR DELETE USING (auth.uid() = id_usuario AND sistema = FALSE);
 
 -- Despesas (via orçamento do usuário)
+-- Estratégia:
+-- em vez de gravar id_usuario direto em despesas, o vínculo de posse é derivado
+-- pela tabela de orçamento. Assim, a policy valida propriedade via id_orcamento.
 ALTER TABLE despesas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "despesas_select_own" ON despesas FOR SELECT
     USING (id_orcamento IN (SELECT id FROM orcamento WHERE id_usuario = auth.uid()));

@@ -2,10 +2,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Categoria } from '../types/database'
 
+// Hook de categorias:
+// inclui categorias do sistema e personalizadas conforme políticas RLS.
 export function useCategories() {
   const [categories, setCategories] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Ordena alfabeticamente para manter select/listagens previsíveis na UI.
   const fetch = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase

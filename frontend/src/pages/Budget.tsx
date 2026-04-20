@@ -9,6 +9,8 @@ import { formatCurrency, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Tela de orçamento:
+// compara planejado vs realizado e permite ajustes por mês/ano.
 export default function Budget() {
   const { user } = useAuth()
   const { budgets, loading, addBudget, updateBudget } = useBudget()
@@ -23,6 +25,7 @@ export default function Budget() {
   const [ano, setAno] = useState(now.getFullYear())
   const [valorPlanejado, setValorPlanejado] = useState('')
 
+  // Recorte anual para visão histórica e gráfico comparativo.
   const yearBudgets = useMemo(() =>
     budgets
       .filter(b => b.ano === selectedYear)
@@ -30,6 +33,7 @@ export default function Budget() {
     [budgets, selectedYear]
   )
 
+  // Dados no formato esperado pelo gráfico de barras.
   const chartData = useMemo(() =>
     yearBudgets.map(b => ({
       name: MONTH_NAMES[b.mes - 1].substring(0, 3),
@@ -41,6 +45,7 @@ export default function Budget() {
 
   const currentMonthBudget = yearBudgets.find(b => b.mes === now.getMonth() + 1 && b.ano === now.getFullYear())
 
+  // Breakdown de despesas confirmadas do mês atual para apoiar análise rápida.
   const categoryBreakdown = useMemo(() => {
     if (!currentMonthBudget) return []
     const monthTx = transactions.filter(t => {
@@ -88,6 +93,7 @@ export default function Budget() {
     e.preventDefault()
     if (!user) return
 
+    // Edição altera só o valor planejado; mês/ano permanecem como identidade do orçamento.
     if (editingId) {
       const { error } = await updateBudget(editingId, { valor_planejado: parseFloat(valorPlanejado) })
       if (error) toast.error('Erro ao atualizar orçamento.')

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import logoVertical from '../../assets/logo-vertical.png'
 
+// Layout das telas públicas de autenticação (login/cadastro).
 export default function AuthLayout() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white">

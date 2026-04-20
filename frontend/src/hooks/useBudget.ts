@@ -3,11 +3,14 @@ import { supabase } from '../lib/supabase'
 import type { Orcamento } from '../types/database'
 import { useAuth } from './useAuth'
 
+// Hook de orçamento mensal:
+// concentra leitura/escrita de orçamentos e a regra "obter ou criar" por mês/ano.
 export function useBudget() {
   const { user } = useAuth()
   const [budgets, setBudgets] = useState<Orcamento[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Busca sempre ordenada do mais recente para o mais antigo para facilitar exibição.
   const fetch = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -40,9 +43,11 @@ export function useBudget() {
   async function getOrCreateBudget(mes: number, ano: number): Promise<Orcamento | null> {
     if (!user) return null
 
+    // Evita roundtrip desnecessário quando orçamento já está em memória.
     const existing = budgets.find(b => b.mes === mes && b.ano === ano)
     if (existing) return existing
 
+    // Upsert garante idempotência: se já existir pela chave única, reaproveita.
     const { data } = await supabase
       .from('orcamento')
       .upsert({

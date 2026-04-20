@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import logoHorizontal from '../assets/logo-horizontal.png'
 
+// Página pública de apresentação do produto com CTA para cadastro/login.
 export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
