@@ -77,6 +77,47 @@ O app está disponível em versão estável em: https://poup-eazy.vercel.app/
 
 ---
 
+## Configuração do Supabase para recuperação de senha
+
+O fluxo de "Esqueci minha senha" usa o `supabase.auth.resetPasswordForEmail` e o `supabase.auth.updateUser`. Para funcionar em desenvolvimento e produção é necessário liberar as URLs de retorno no painel do Supabase.
+
+### 1. Site URL e Redirect URLs
+
+No painel do projeto, vá em **Authentication → URL Configuration** e configure:
+
+- **Site URL**: `https://poup-eazy.vercel.app` (URL principal de produção)
+- **Redirect URLs** (adicione todas que forem usadas):
+  - `http://localhost:5173/redefinir-senha`
+  - `https://poup-eazy.vercel.app/redefinir-senha`
+
+Sem esses endereços liberados o Supabase ignora o `redirectTo` e o usuário cai numa página inválida após clicar no e-mail.
+
+### 2. (Opcional) Personalizar o template de e-mail
+
+Em **Authentication → Email Templates → Reset Password** você pode adaptar o texto. O link sempre usa `{{ .ConfirmationURL }}`, que já é montado com o `redirectTo` da nossa chamada.
+
+Exemplo de template em português:
+
+```html
+<h2>Redefina sua senha do PoupEazy</h2>
+<p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
+<p>Clique no botão abaixo para criar uma nova senha. O link expira em 1 hora.</p>
+<p><a href="{{ .ConfirmationURL }}">Redefinir senha</a></p>
+<p>Se você não solicitou, basta ignorar este e-mail.</p>
+```
+
+### 3. Rotas envolvidas no frontend
+
+| Rota                | Descrição                                              |
+| ------------------- | ------------------------------------------------------ |
+| `/login`            | Tem link "Esqueci minha senha"                         |
+| `/esqueci-senha`    | Formulário que dispara o e-mail de recuperação         |
+| `/redefinir-senha`  | Página acessada via link do e-mail para definir a nova senha |
+
+> Importante: a rota `/redefinir-senha` fica fora do guard `PublicRoute` porque o link de recuperação do Supabase cria uma sessão temporária. Sem isso o usuário seria redirecionado para o dashboard antes de conseguir trocar a senha.
+
+---
+
 ## Estrutura do Projeto
 
 ```

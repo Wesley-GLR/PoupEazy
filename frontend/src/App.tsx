@@ -5,6 +5,8 @@ import AppLayout from './components/layout/AppLayout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Categories from './pages/Categories'
@@ -70,6 +72,13 @@ export default function App() {
         <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
+          <Route path="/esqueci-senha" element={<ForgotPassword />} />
+        </Route>
+
+        {/* Redefinição de senha: usa AuthLayout mas fica fora do PublicRoute,
+            pois o link de recuperação do Supabase cria uma sessão temporária. */}
+        <Route element={<AuthLayout />}>
+          <Route path="/redefinir-senha" element={<ResetPassword />} />
         </Route>
 
         {/* Rotas principais do produto (exigem sessão ativa). */}

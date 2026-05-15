@@ -62,6 +62,14 @@ export default function Login() {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          <div className="mt-1 text-right">
+            <Link
+              to="/esqueci-senha"
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
         </div>
 
         <button

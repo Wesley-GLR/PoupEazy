@@ -14,6 +14,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, nome: string, telefone?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   updateProfile: (data: Partial<Profile>) => Promise<void>
+  resetPassword: (email: string) => Promise<{ error: Error | null }>
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -86,8 +88,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetchProfile(user.id)
   }
 
+  // Dispara o e-mail de recuperação de senha do Supabase Auth.
+  // O `redirectTo` precisa estar liberado em Authentication → URL Configuration → Redirect URLs.
+  async function resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    })
+    return { error: error as Error | null }
+  }
+
+  // Atualiza a senha do usuário autenticado (também usado após o clique no link de recuperação,
+  // momento em que o Supabase cria uma sessão temporária via evento PASSWORD_RECOVERY).
+  async function updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    return { error: error as Error | null }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, updateProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+        resetPassword,
+        updatePassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
