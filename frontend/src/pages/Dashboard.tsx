@@ -2,8 +2,10 @@ import { useMemo } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTransactions } from '../hooks/useTransactions'
 import { useBudget } from '../hooks/useBudget'
+import { useGoals } from '../hooks/useGoals'
 import Card from '../components/ui/Card'
 import PieChart from '../components/charts/PieChart'
+import ProgressBar from '../components/ui/ProgressBar'
 import { formatCurrency, formatDate } from '../lib/format'
 import { TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
 
@@ -13,6 +15,7 @@ export default function Dashboard() {
   const { profile } = useAuth()
   const { transactions, loading: txLoading } = useTransactions()
   const { budgets, loading: budgetLoading } = useBudget()
+  const { goals, loading: goalsLoading } = useGoals()
 
   const now = new Date()
   const currentMonth = now.getMonth() + 1
@@ -46,7 +49,8 @@ export default function Dashboard() {
   }, [monthTx])
 
   const recentTx = transactions.slice(0, 5)
-  const loading = txLoading || budgetLoading
+  const loading = txLoading || budgetLoading || goalsLoading
+  const activeGoals = goals.filter(g => g.status === 'ativa')
 
   if (loading) {
     return (
@@ -150,6 +154,33 @@ export default function Dashboard() {
           <PieChart data={categoryData} />
         </div>
       </div>
+
+      {/* Seção de metas ativas */}
+      {activeGoals.length > 0 && (
+        <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-semibold text-[#1E1E1E]">Metas Ativas</h2>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {activeGoals.map(goal => {
+              const pct = goal.valor_objetivo > 0
+                ? (Number(goal.valor_atual) / Number(goal.valor_objetivo)) * 100
+                : 0
+              return (
+                <div key={goal.id} className="rounded-lg border border-border/60 p-4">
+                  <div className="mb-1 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-[#1E1E1E] truncate">{goal.nome}</p>
+                    <span className="ml-2 shrink-0 text-xs text-muted">{Math.round(pct)}%</span>
+                  </div>
+                  <ProgressBar percent={pct} />
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                    <span>{formatCurrency(Number(goal.valor_atual))} / {formatCurrency(Number(goal.valor_objetivo))}</span>
+                    <span>até {formatDate(goal.data_limite)}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
