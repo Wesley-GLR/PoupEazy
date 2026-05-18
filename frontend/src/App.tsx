@@ -12,6 +12,7 @@ import Transactions from './pages/Transactions'
 import Categories from './pages/Categories'
 import Goals from './pages/Goals'
 import Budget from './pages/Budget'
+import Integrations from './pages/Integrations'
 
 // Guardião de rotas privadas:
 // só libera a renderização quando o estado de autenticação já foi resolvido.
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/categorias" element={<Categories />} />
           <Route path="/metas" element={<Goals />} />
           <Route path="/orcamento" element={<Budget />} />
+          <Route path="/integracoes" element={<Integrations />} />
         </Route>
 
         {/* Fallback de navegação: home inteligente + redirecionamento de rotas inválidas. */}

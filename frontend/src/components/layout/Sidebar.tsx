@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign } from 'lucide-react'
+import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign, Landmark } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import logoHorizontal from '../../assets/logo-horizontal.png'
 
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/categorias', label: 'Categorias', icon: Grid3X3 },
   { to: '/metas', label: 'Metas', icon: ArrowUpRight },
   { to: '/orcamento', label: 'Orçamento', icon: DollarSign },
+  { to: '/integracoes', label: 'Open Finance', icon: Landmark },
 ]
 
 interface SidebarProps {

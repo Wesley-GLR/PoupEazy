@@ -1,0 +1,53 @@
+name: Atualização Automática da Documentação
+
+# O robô será disparado em todo push (commit enviado) para a branch main
+on:
+  push:
+    branches:
+      - main
+    # Evita loops infinitos: o robô não vai rodar se o próprio commit dele tiver [skip ci]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+
+    # Permissões necessárias para o robô conseguir escrever/fazer commit no seu repositório
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Baixa o código do seu repositório na máquina virtual do GitHub
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2. Configura o Node.js (caso seu script de documentação precise rodar algo)
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-node-version: "20"
+
+      # 3. Executa a geração da documentação
+      # AQUI você coloca o comando que gera sua documentação (ex: npm run docs, pydoc, ou um script customizado)
+      # Se for apenas um script simples para atualizar a data/versão no README, podemos fazer direto via terminal:
+      - name: Atualizar arquivos de documentação
+        run: |
+          echo -e "\n\n*Última atualização automatizada em: $(date +'%d/%m/%Y %H:%M:%S')*" >> README.md
+          # Se você tiver um gerador como TypeDoc, JSDoc ou MkDocs, você rodaria o comando dele aqui:
+          # cd backend && npm install && npm run generate-docs
+
+      # 4. Verifica se houve mudanças e faz o Commit automático de volta para o GitHub
+      - name: Commit e Push das alterações de documentação
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Verifica se o arquivo mudou antes de fazer o commit para não dar erro se não houver alterações
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "docs: atualização automática da documentação [skip ci]"
+            git push
+          else
+            echo "Nenhuma alteração na documentação encontrada."
+          fi
