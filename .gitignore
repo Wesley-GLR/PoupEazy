@@ -1,0 +1,15 @@
+# Ambientes e chaves secretas
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Pastas de dependências
+node_modules/
+dist/
+.cache/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
