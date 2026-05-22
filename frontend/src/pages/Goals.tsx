@@ -77,7 +77,7 @@ export default function Goals() {
 
   function openTxModal(goalId: string) {
     setTxGoalId(goalId)
-    setTxTipo('despesa')
+    setTxTipo('receita')
     setTxValor('')
     setTxData(new Date().toISOString().slice(0, 10))
     setTxDescricao('')
@@ -259,14 +259,14 @@ export default function Goals() {
                         {txs.map(tx => (
                           <div key={tx.id} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-1.5">
-                              {tx.tipo === 'despesa'
+                              {tx.tipo === 'receita'
                                 ? <ArrowDownCircle size={13} className="text-success" />
                                 : <ArrowUpCircle size={13} className="text-danger" />}
                               <span className="text-[#1E1E1E]">{tx.descricao}</span>
                             </div>
                             <div className="text-right">
-                              <span className={tx.tipo === 'despesa' ? 'text-success' : 'text-danger'}>
-                                {tx.tipo === 'despesa' ? '+' : '-'}{formatCurrency(Number(tx.valor))}
+                              <span className={tx.tipo === 'receita' ? 'text-success' : 'text-danger'}>
+                                {tx.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(tx.valor))}
                               </span>
                               <span className="ml-1 text-muted">{formatDate(tx.data_transacao)}</span>
                             </div>
@@ -375,14 +375,14 @@ export default function Goals() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setTxTipo('despesa')}
+                onClick={() => setTxTipo('receita')}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-sm font-medium transition ${txTipo === 'despesa' ? 'border-success bg-success/10 text-success' : 'border-border text-muted hover:border-success/60'}`}
               >
                 <ArrowDownCircle size={16} /> Aporte
               </button>
               <button
                 type="button"
-                onClick={() => setTxTipo('receita')}
+                onClick={() => setTxTipo('despesa')}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border py-2 text-sm font-medium transition ${txTipo === 'receita' ? 'border-danger bg-danger/10 text-danger' : 'border-border text-muted hover:border-danger/60'}`}
               >
                 <ArrowUpCircle size={16} /> Retirada
