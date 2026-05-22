@@ -1,0 +1,40 @@
+name: Atualizar Documentação
+
+on:
+  push:
+    branches:
+      - Open-Finance
+    paths-ignore:
+      - "frontend/docs/**"
+
+jobs:
+  gerar-docs:
+    runs-on: ubuntu-latest
+
+    # A MÁGICA DA SOLUÇÃO 1: Pede autorização direta ao GitHub
+    permissions:
+      contents: write
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependências e Gerar Documentação
+        run: |
+          cd frontend
+          npm install
+          npm run generate-docs
+
+      - name: Salvar (Commit) e Enviar para o GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add frontend/docs
+          git commit -m "docs: gerando documentação automática [skip ci]" || echo "Nenhuma mudança para commitar"
+          git push origin Open-Finance
