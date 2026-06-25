@@ -9,8 +9,15 @@ import { formatCurrency, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Tela de orçamento:
-// compara planejado vs realizado e permite ajustes por mês/ano.
+/**
+ * Componente principal da tela de Orçamento.
+ * * Este componente renderiza um painel interativo que permite ao usuário
+ * comparar o orçamento planejado versus o realizado. Ele exibe gráficos,
+ * barras de progresso e uma tabela com o detalhamento anual, além de 
+ * permitir a criação e edição dos orçamentos mensais.
+ * * @returns A interface completa da tela de orçamento.
+ */
+
 export default function Budget() {
   const { user } = useAuth()
   const { budgets, loading, addBudget, updateBudget } = useBudget()
@@ -67,6 +74,11 @@ export default function Budget() {
       .sort((a, b) => b.value - a.value)
   }, [transactions, currentMonthBudget, now])
 
+  /**
+   * Reseta os campos do formulário para os valores padrão (mês e ano atuais).
+   * Limpa o ID de edição ativo.
+   */
+
   function resetForm() {
     setMes(now.getMonth() + 1)
     setAno(now.getFullYear())
@@ -74,10 +86,19 @@ export default function Budget() {
     setEditingId(null)
   }
 
+  /**
+   * Prepara o estado e abre o modal para a criação de um novo orçamento.
+   */
+
   function openNew() {
     resetForm()
     setModalOpen(true)
   }
+
+  /**
+   * Carrega os dados de um orçamento existente no formulário e abre o modal para edição.
+   * * @param id - O identificador único do orçamento a ser editado.
+   */
 
   function openEdit(id: string) {
     const b = budgets.find(x => x.id === id)
@@ -88,6 +109,11 @@ export default function Budget() {
     setEditingId(id)
     setModalOpen(true)
   }
+
+  /**
+   * Processa o envio do formulário do modal, seja para criar ou atualizar um orçamento.
+   * * @param e - O evento de submissão nativo do React.
+   */
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
