@@ -4,7 +4,15 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
-// Tela de login por e-mail/senha integrada ao Supabase Auth.
+/**
+ * Tela de autenticação de usuários (Login).
+ * * Fornece a interface para que usuários existentes acessem suas contas
+ * utilizando credenciais de e-mail e senha. O formulário é integrado ao 
+ * Supabase Auth através do hook customizado `useAuth`. Inclui funcionalidades 
+ * de UX, como a alternância de visibilidade da senha e tratamento visual de 
+ * estados de carregamento (loading).
+ * * @returns O componente de formulário de login.
+ */
 export default function Login() {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
@@ -12,6 +20,12 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  /**
+   * Processa a submissão do formulário de login.
+   * Intercepta o evento padrão, aciona a função de autenticação do Supabase
+   * e exibe um alerta de erro caso as credenciais sejam inválidas.
+   * * @param e - O evento de submissão nativo do formulário React.
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
