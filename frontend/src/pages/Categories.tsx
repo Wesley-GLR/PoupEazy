@@ -8,12 +8,24 @@ import { formatCurrency } from '../lib/format'
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Mapeamento de tipo técnico -> rótulo amigável exibido na UI.
+/**
+ * Dicionário que mapeia os nomes técnicos dos tipos de categoria
+ * para rótulos amigáveis que serão exibidos na interface do usuário.
+ */
 const TIPO_LABELS: Record<string, string> = {
   despesa_fixa: 'Despesa Fixa',
   despesa_variavel: 'Despesa Variável',
   receita: 'Receita',
 }
+
+/**
+ * Componente principal da tela de Categorias.
+ * * Este componente permite ao usuário visualizar a distribuição de suas despesas
+ * em um gráfico de pizza, além de listar todas as categorias disponíveis. 
+ * Oferece funcionalidades para criar, editar e excluir categorias personalizadas,
+ * bloqueando alterações nas categorias nativas do sistema.
+ * * @returns A interface completa da tela de categorias.
+ */
 
 export default function Categories() {
   const { user } = useAuth()
@@ -42,6 +54,11 @@ export default function Categories() {
 
   const totalDespesas = chartData.reduce((s, d) => s + d.value, 0)
 
+  /**
+   * Reseta os campos do formulário para os valores padrão.
+   * Limpa o estado de edição e remove o ícone selecionado.
+   */
+
   function resetForm() {
     setNome('')
     setTipo('despesa_variavel')
@@ -49,10 +66,20 @@ export default function Categories() {
     setEditingId(null)
   }
 
+  /**
+   * Prepara o estado limpando o formulário e abre o modal para criação de uma nova categoria.
+   */
+
   function openNew() {
     resetForm()
     setModalOpen(true)
   }
+
+  /**
+   * Carrega os dados de uma categoria existente no formulário e abre o modal para edição.
+   * Categorias marcadas como 'sistema' são ignoradas e não abrem o modal.
+   * * @param id - O identificador único da categoria a ser editada.
+   */
 
   function openEdit(id: string) {
     const cat = categories.find(c => c.id === id)
@@ -64,6 +91,12 @@ export default function Categories() {
     setEditingId(id)
     setModalOpen(true)
   }
+
+  /**
+   * Processa o envio do formulário do modal, seja para criar uma nova categoria
+   * ou atualizar uma existente.
+   * * @param e - O evento de submissão nativo do formulário React.
+   */
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -91,6 +124,12 @@ export default function Categories() {
     resetForm()
   }
 
+  /**
+   * Processa a exclusão de uma categoria selecionada após confirmação do usuário.
+   * Impede a exclusão caso a categoria seja nativa do sistema.
+   * * @param id - O identificador único da categoria a ser excluída.
+   */
+  
   async function handleDelete(id: string) {
     const cat = categories.find(c => c.id === id)
     if (cat?.sistema) {
