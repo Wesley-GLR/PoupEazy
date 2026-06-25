@@ -7,8 +7,16 @@ import { formatCurrency, formatDate } from '../lib/format'
 import { Plus, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Tela de metas:
-// separa metas ativas e finalizadas para facilitar operação diária.
+/**
+ * Componente principal da tela de Metas.
+ * 
+ * Gerencia a exibição, criação, edição e exclusão de metas financeiras do usuário.
+ * A interface divide automaticamente as metas entre "Ativas" (foco da operação diária) 
+ * e "Finalizadas" (concluídas ou canceladas). Exibe barras de progresso baseadas no 
+ * valor atual versus o objetivo, além de calcular os dias restantes para o vencimento.
+ * 
+ * @returns O componente da interface de gerenciamento de metas.
+ */
 export default function Goals() {
   const { user } = useAuth()
   const { goals, loading, addGoal, updateGoal, deleteGoal } = useGoals()
@@ -24,6 +32,9 @@ export default function Goals() {
   const activeGoals = goals.filter(g => g.status === 'ativa')
   const completedGoals = goals.filter(g => g.status !== 'ativa')
 
+  /**
+   * Limpa todos os campos do formulário do modal e reseta o ID de edição.
+   */
   function resetForm() {
     setNome('')
     setDescricao('')
@@ -32,11 +43,20 @@ export default function Goals() {
     setEditingId(null)
   }
 
+  /**
+   * Prepara o estado inicial e abre o modal para a criação de uma nova meta.
+   */
   function openNew() {
     resetForm()
     setModalOpen(true)
   }
 
+  /**
+   * Carrega as informações de uma meta existente para dentro do formulário 
+   * e abre o modal em modo de edição.
+   * 
+   * @param id - O identificador único da meta a ser editada.
+   */
   function openEdit(id: string) {
     const goal = goals.find(g => g.id === id)
     if (!goal) return
@@ -48,6 +68,12 @@ export default function Goals() {
     setModalOpen(true)
   }
 
+  /**
+   * Intercepta a submissão do formulário do modal para realizar a persistência no banco de dados.
+   * Dependendo do estado de `editingId`, ele irá criar uma nova meta ou atualizar uma existente.
+   * 
+   * @param e - O evento de submissão nativo do formulário React.
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!user) return
@@ -78,12 +104,24 @@ export default function Goals() {
     resetForm()
   }
 
+  /**
+   * Altera rapidamente o status de uma meta (por exemplo, marcando-a como concluída ou cancelada)
+   * sem precisar abrir o modal de edição.
+   * 
+   * @param id - O identificador único da meta.
+   * @param status - O novo status que será aplicado à meta.
+   */
   async function handleStatusChange(id: string, status: 'concluida' | 'cancelada') {
     const { error } = await updateGoal(id, { status })
     if (error) toast.error('Erro ao atualizar status.')
     else toast.success(status === 'concluida' ? 'Meta concluída!' : 'Meta cancelada.')
   }
 
+  /**
+   * Exclui permanentemente uma meta do banco de dados após solicitar a confirmação do usuário.
+   * 
+   * @param id - O identificador único da meta a ser excluída.
+   */
   async function handleDelete(id: string) {
     if (!confirm('Tem certeza que deseja excluir esta meta?')) return
     const { error } = await deleteGoal(id)
@@ -91,7 +129,13 @@ export default function Goals() {
     else toast.success('Meta excluída!')
   }
 
-  // Texto auxiliar para urgência de prazo.
+  /**
+   * Calcula a diferença entre a data atual e a data limite da meta para gerar
+   * um rótulo de urgência (quantos dias faltam, se vence hoje ou se está vencida).
+   * 
+   * @param dataLimite - A data de vencimento da meta no formato de string (YYYY-MM-DD).
+   * @returns Uma string indicando o tempo restante.
+   */
   function getDaysLabel(dataLimite: string) {
     const diff = Math.ceil((new Date(dataLimite + 'T00:00:00').getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     if (diff < 0) return 'Vencida'
