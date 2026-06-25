@@ -7,8 +7,15 @@ import PieChart from '../components/charts/PieChart'
 import { formatCurrency, formatDate } from '../lib/format'
 import { TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
 
-// Painel consolidado do mês atual:
-// usa transações confirmadas para evitar distorção de dados pendentes/cancelados.
+/**
+ * Componente principal do Painel (Dashboard).
+ * * Exibe um resumo consolidado das finanças do usuário para o mês atual.
+ * Calcula e apresenta em cards o total de receitas, despesas, saldo e o orçamento planejado.
+ * Para evitar distorções nos dados exibidos, os cálculos de totais e o gráfico de distribuição 
+ * consideram estritamente as transações que possuem o status 'confirmada'.
+ * * @returns A interface do painel com os cards de métricas, lista de transações recentes e gráfico de despesas.
+ */
+
 export default function Dashboard() {
   const { profile } = useAuth()
   const { transactions, loading: txLoading } = useTransactions()
