@@ -15,6 +15,14 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+/**
+ * Componente principal da tela de Integrações (Open Finance).
+ * * Responsável por gerenciar o vínculo entre o PoupEazy e as contas bancárias
+ * do usuário através da API da Pluggy. Permite conectar novas instituições,
+ * listar os bancos já sincronizados, realizar a importação automática do extrato
+ * e desconectar vínculos existentes através de um modal de segurança.
+ * * @returns A interface de gerenciamento de integrações bancárias.
+ */
 export default function Integrations() {
   const { addTransaction } = useTransactions();
   const { budgets } = useBudget();
@@ -51,7 +59,14 @@ export default function Integrations() {
     getConnectToken();
   }, []);
 
-  // Motor de categorização inteligente
+  /**
+   * Motor de categorização inteligente.
+   * Analisa a descrição da transação importada e tenta mapeá-la para
+   * uma das categorias pré-definidas do usuário com base em palavras-chave.
+   * * @param descricao - O texto descritivo da transação vindo do extrato bancário.
+   * @param tipo - O tipo da movimentação ('despesa' ou 'receita').
+   * @returns O identificador único (ID) da categoria correspondente, ou a categoria padrão ('Outros') caso não encontre correspondência.
+   */
   function descobrirCategoriaId(
     descricao: string,
     tipo: "despesa" | "receita",
@@ -108,7 +123,12 @@ export default function Integrations() {
     return catEncontrada ? catEncontrada.id : categories[0]?.id;
   }
 
-  // Quando o usuário termina de colocar a senha no Widget oficial da Pluggy
+  /**
+   * Callback acionado com sucesso quando o usuário finaliza o fluxo de autenticação
+   * no widget oficial da Pluggy. Extrai as informações da instituição, salva no banco
+   * e dispara o processo de importação e categorização das transações.
+   * * @param itemData - Objeto retornado pela Pluggy contendo o ID e detalhes do conector (instituição bancária).
+   */
   const handleSuccess = async (itemData: any) => {
     setIsSyncing(true);
     const instituicao = itemData.item.connector.name;
@@ -171,13 +191,20 @@ export default function Integrations() {
     }
   };
 
-  // Abre o Pop-up e guarda qual token/banco o usuário quer apagar
+  /**
+   * Prepara o estado interno e abre o modal de confirmação para exclusão
+   * de um vínculo bancário específico.
+   * * @param token - O objeto representando a conexão bancária (OpenFinanceToken) selecionada pelo usuário.
+   */
   const abrirConfirmacaoExcluir = (token: OpenFinanceToken) => {
     setTokenParaExcluir(token);
     setMostrarModalExcluir(true);
   };
 
-  // Executa a exclusão real após a confirmação no Pop-up (desativa no Supabase)
+  /**
+   * Executa a remoção definitiva do vínculo bancário selecionado no banco de dados
+   * após a confirmação do usuário. Limpa o estado do modal ao finalizar.
+   */
   const confirmarExclusao = async () => {
     if (tokenParaExcluir) {
       const { error } = await disconnectBank(tokenParaExcluir.id);
