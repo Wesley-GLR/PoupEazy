@@ -4,14 +4,27 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { ArrowLeft, MailCheck } from 'lucide-react'
 
-// Tela pública para o usuário solicitar um e-mail com link de recuperação de senha.
-// O envio é feito pelo Supabase Auth, que entrega o link já com tokens de acesso.
+/**
+ * Tela pública para solicitação de recuperação de senha.
+ * * Permite que o usuário insira seu e-mail para receber um link de redefinição.
+ * O envio é processado pelo Supabase Auth, que entrega o link já com os tokens de acesso.
+ * A interface gerencia os estados de carregamento e sucesso, além de mapear os erros
+ * retornados pelo servidor.
+ * * @returns O componente de formulário para recuperação de senha.
+ */
 export default function ForgotPassword() {
   const { resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
+  /**
+   * Processa o envio do formulário de recuperação de senha.
+   * Interage com o serviço de autenticação para solicitar o e-mail de redefinição
+   * e faz o tratamento detalhado de possíveis erros (limite de taxa, falha de SMTP, URL não permitida, etc).
+   * * @param e - O evento de submissão nativo do formulário React.
+   */
+  
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
