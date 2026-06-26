@@ -5,9 +5,15 @@ import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 
-// Tela acessada via link enviado por e-mail pelo Supabase Auth.
-// O link traz tokens na URL; o cliente do Supabase reconhece e emite o evento PASSWORD_RECOVERY,
-// liberando uma sessão temporária autorizada apenas a atualizar a senha.
+/**
+ * Tela de redefinição de senha (acessada via link de recuperação).
+ * * Este componente é o destino do link enviado por e-mail pelo Supabase Auth.
+ * Ele intercepta os tokens presentes na URL e aguarda a emissão do evento `PASSWORD_RECOVERY`.
+ * Ao detectar o evento, libera uma sessão temporária com permissão restrita apenas 
+ * para a atualização da credencial do usuário. Gerencia também os estados visuais para 
+ * links expirados/inválidos e o formulário de nova senha.
+ * * @returns O componente responsável pelo fluxo de redefinição de senha.
+ */
 export default function ResetPassword() {
   const { updatePassword } = useAuth()
   const navigate = useNavigate()
@@ -36,6 +42,13 @@ export default function ResetPassword() {
     return () => subscription.unsubscribe()
   }, [])
 
+  /**
+   * Processa a submissão do formulário com a nova senha.
+   * Realiza a validação local (tamanho e igualdade das senhas), invoca a função de 
+   * atualização no Supabase e, em caso de sucesso, encerra a sessão temporária 
+   * para forçar o usuário a realizar um novo login de forma limpa e segura.
+   * * @param e - O evento de submissão nativo do formulário React.
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
