@@ -8,8 +8,15 @@ import { formatCurrency, formatDate } from '../lib/format'
 import { Plus, Pencil, Trash2, Search, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Tela de transações:
-// concentra CRUD e garante que toda transação esteja vinculada a um orçamento mensal.
+/**
+ * Componente principal da tela de Transações.
+ * * Centraliza as operações de CRUD (Criar, Ler, Atualizar, Excluir) das movimentações
+ * financeiras do usuário. Possui filtros locais por texto e tipo (receita/despesa) 
+ * para busca rápida. A regra de negócio principal deste componente garante que 
+ * toda transação registrada seja automaticamente vinculada ao orçamento do mês/ano 
+ * correspondente à data da transação.
+ * * @returns O componente da interface de gerenciamento de transações.
+ */
 export default function Transactions() {
   const { user } = useAuth()
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } = useTransactions()
@@ -46,6 +53,10 @@ export default function Transactions() {
     [categories, tipo]
   )
 
+  /**
+   * Limpa os estados do formulário para os valores padrão, definindo a data atual
+   * e resetando os identificadores de edição.
+   */
   function resetForm() {
     setDescricao('')
     setValor('')
@@ -55,11 +66,19 @@ export default function Transactions() {
     setEditingId(null)
   }
 
+  /**
+   * Prepara o formulário limpando os dados e abre o modal para a criação de uma nova transação.
+   */
   function openNew() {
     resetForm()
     setModalOpen(true)
   }
 
+  /**
+   * Carrega os dados de uma transação selecionada para os estados do formulário
+   * e abre o modal em modo de edição.
+   * * @param id - O identificador único da transação a ser editada.
+   */
   function openEdit(id: string) {
     const tx = transactions.find(t => t.id === id)
     if (!tx) return
@@ -72,6 +91,13 @@ export default function Transactions() {
     setModalOpen(true)
   }
 
+  /**
+   * Processa o envio do formulário do modal para persistência no banco de dados.
+   * Aplica a regra central do sistema: busca ou cria um orçamento para o mês/ano
+   * selecionado antes de vincular a transação. Mantém um payload explícito para
+   * respeitar a estrutura de relatórios e triggers do banco.
+   * * @param e - O evento de submissão nativo do formulário React.
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!user) return
@@ -112,6 +138,10 @@ export default function Transactions() {
     resetForm()
   }
 
+  /**
+   * Exclui uma transação do banco de dados após a confirmação manual do usuário.
+   * * @param id - O identificador único da transação a ser excluída.
+   */
   async function handleDelete(id: string) {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return
     const { error } = await deleteTransaction(id)
