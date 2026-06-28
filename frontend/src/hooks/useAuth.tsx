@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-//**
+/**
  * Hook customizado para acesso seguro ao Contexto de Autenticação.
  * * @throws Lança um erro fatal se for invocado por um componente que não esteja encapsulado pelo `AuthProvider`.
  * @returns O objeto contendo as propriedades e métodos globais de autenticação (`AuthContextType`).
