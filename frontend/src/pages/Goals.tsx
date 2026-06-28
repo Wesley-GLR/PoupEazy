@@ -18,7 +18,7 @@ export default function Goals() {
   const { goals, loading, addGoal, updateGoal, deleteGoal, addGoalTransaction } = useGoals()
   const { categories } = useCategories()
   const { transactions } = useTransactions()
-  const { budgets, getOrCreateBudget } = useBudget()
+  const { getOrCreateBudget } = useBudget()
 
   // --- Modal de criar/editar meta ---
   const [modalOpen, setModalOpen] = useState(false)
