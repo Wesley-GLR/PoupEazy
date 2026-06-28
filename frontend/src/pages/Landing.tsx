@@ -1,17 +1,7 @@
 import { Link } from 'react-router-dom'
 import logoHorizontal from '../assets/logo-horizontal.png'
 
-/**
- * Tela pública de apresentação do produto (Landing Page).
- * 
- * Esta é a porta de entrada do aplicativo, responsável por exibir a proposta
- * de valor do PoupEazy ("A plataforma completa para sua gestão financeira").
- * A interface é composta por uma seção inicial (Hero) com chamadas para ação (CTAs),
- * seguida por blocos explicativos sobre o funcionamento automático de categorização
- * e as garantias de segurança de dados. Redireciona os usuários para o login ou cadastro.
- * 
- * @returns O componente da página inicial de apresentação pública.
- */
+// Página pública de apresentação do produto com CTA para cadastro/login.
 export default function Landing() {
   return (
     <div className="min-h-screen bg-white">

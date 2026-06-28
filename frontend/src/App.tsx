@@ -14,15 +14,9 @@ import Goals from './pages/Goals'
 import Budget from './pages/Budget'
 import Integrations from './pages/Integrations'
 
-/**
- * Componente guardião para rotas privadas (Private Route).
- * * Intercepta o acesso a componentes que exigem autenticação. Exibe um indicador de 
- * carregamento (spinner) enquanto o estado da sessão do Supabase é resolvido, evitando 
- * o "piscar" de telas indevidas. Redireciona usuários não autenticados para a tela de login.
- * * @param props - Propriedades do componente.
- * @param props.children - Os elementos filhos que serão renderizados caso a autenticação seja válida.
- * @returns O componente filho (se autenticado), um redirecionamento (se não) ou um loader.
- */
+// Guardião de rotas privadas:
+// só libera a renderização quando o estado de autenticação já foi resolvido.
+// Enquanto carrega, exibe um spinner para evitar "piscar" de páginas indevidas.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
@@ -38,15 +32,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-/**
- * Componente guardião para rotas públicas (Public Route).
- * * Protege páginas de acesso restrito a visitantes (como Login e Cadastro) contra 
- * usuários que já possuem uma sessão ativa, redirecionando-os automaticamente 
- * para o painel principal (Dashboard).
- * * @param props - Propriedades do componente.
- * @param props.children - Os elementos filhos que serão renderizados caso o usuário seja um visitante.
- * @returns O componente filho (se visitante), um redirecionamento (se logado) ou um loader.
- */
+// Guardião de rotas públicas:
+// impede que usuário já autenticado volte para login/cadastro.
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
@@ -62,13 +49,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-/**
- * Controlador dinâmico da rota raiz ("/").
- * * Funciona como um roteador de tráfego inteligente: se o usuário já estiver
- * autenticado, ele é direcionado diretamente para o Dashboard. Caso contrário,
- * a regra o mantém na Landing Page de apresentação do produto.
- * * @returns O componente da Landing Page, um redirecionamento ou um loader.
- */
+// Regra da home:
+// usuário autenticado vai direto para o painel; visitante vê landing page.
 function LandingRoute() {
   const { user, loading } = useAuth()
   if (loading) {
@@ -82,17 +64,6 @@ function LandingRoute() {
   return <Landing />
 }
 
-/**
- * Componente raiz de roteamento da aplicação.
- * * Configura a árvore de navegação utilizando o React Router DOM.
- * Envolve toda a aplicação no provedor de contexto de autenticação (AuthProvider)
- * e divide as rotas em três grandes grupos protegidos por seus respectivos guardiões e layouts:
- * 1. Públicas (AuthLayout) - Acessíveis apenas sem sessão.
- * 2. Redefinição de Senha - Caso especial fora da restrição pública devido à sessão temporária.
- * 3. Privadas (AppLayout) - Acessíveis estritamente por usuários logados.
- * Inclui roteamento de fallback de segurança para URLs inexistentes (404).
- * * @returns A árvore de rotas configurada para o aplicativo.
- */
 export default function App() {
   return (
     // AuthProvider disponibiliza sessão, usuário e perfil para toda a árvore.

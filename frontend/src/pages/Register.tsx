@@ -4,14 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
-/**
- * Tela de criação de nova conta de usuário (Cadastro).
- * * Fornece um formulário para coleta de dados básicos (nome, e-mail, telefone e senha).
- * Implementa validações locais de segurança e consistência (tamanho mínimo de senha e
- * confirmação de senha) para evitar requisições desnecessárias (roundtrips) ao servidor.
- * A persistência da conta é delegada ao serviço de autenticação (Supabase) via `useAuth`.
- * * @returns O componente do formulário de registro.
- */
+// Tela de cadastro com validações mínimas antes de criar conta no Auth.
 export default function Register() {
   const { signUp } = useAuth()
   const navigate = useNavigate()
@@ -23,13 +16,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  /**
-   * Processa a submissão do formulário de cadastro.
-   * Realiza validações de integridade no lado do cliente e, se aprovado,
-   * solicita a criação do usuário no provedor de autenticação. Em caso de sucesso,
-   * redireciona o usuário para a tela de login.
-   * * @param e - O evento de submissão nativo do formulário React.
-   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
