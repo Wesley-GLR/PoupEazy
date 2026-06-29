@@ -12,6 +12,23 @@ export function formatDate(dateStr: string): string {
   return date.toLocaleDateString('pt-BR')
 }
 
+// Versão compacta para eixos de gráficos (ex.: "R$ 5k", "R$ 1,2 mi").
+export function formatCompactCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
+// Verifica se uma data (YYYY-MM-DD) pertence ao mês/ano informados.
+// Centraliza a regra de recorte por período usada nas telas.
+export function isInPeriod(dateStr: string, mes: number, ano: number): boolean {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.getMonth() + 1 === mes && d.getFullYear() === ano
+}
+
 // Fonte única de nomes de meses usada em seleção e gráficos.
 export const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

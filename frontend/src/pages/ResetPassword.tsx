@@ -1,16 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { api } from '../lib/api'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 
-// Tela acessada via link enviado por e-mail pelo Supabase Auth.
-// O link traz tokens na URL; o cliente do Supabase reconhece e emite o evento PASSWORD_RECOVERY,
-// liberando uma sessão temporária autorizada apenas a atualizar a senha.
+// Tela de redefinicao de senha.
+// O link de recuperacao traz o token na query string (?token=...).
+// Em desenvolvimento, pegue o resetToken retornado por POST /auth/forgot-password
+// (via Postman) e acesse /redefinir-senha?token=SEU_TOKEN.
 export default function ResetPassword() {
-  const { updatePassword } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token')
+
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmar, setConfirmar] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -19,22 +21,10 @@ export default function ResetPassword() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    // O Supabase pode demorar alguns ms para processar os tokens da URL.
-    // Escutamos PASSWORD_RECOVERY e, como fallback, checamos a sessão atual.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setCanReset(true)
-        setChecking(false)
-      }
-    })
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setCanReset(true)
-      setChecking(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+    // Sem token na URL nao ha como redefinir.
+    setCanReset(Boolean(token))
+    setChecking(false)
+  }, [token])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -50,19 +40,15 @@ export default function ResetPassword() {
     }
 
     setLoading(true)
-    const { error } = await updatePassword(novaSenha)
-
-    if (error) {
-      toast.error(error.message || 'Não foi possível atualizar a senha.')
+    try {
+      await api.post('/auth/reset-password', { token, novaSenha }, { auth: false })
+      toast.success('Senha atualizada! Faça login com a nova senha.')
+      navigate('/login', { replace: true })
+    } catch (err) {
+      toast.error((err as Error).message || 'Não foi possível atualizar a senha.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    toast.success('Senha atualizada! Faça login com a nova senha.')
-    // Encerra a sessão temporária criada pelo link de recuperação para forçar o login limpo.
-    await supabase.auth.signOut()
-    setLoading(false)
-    navigate('/login', { replace: true })
   }
 
   if (checking) {

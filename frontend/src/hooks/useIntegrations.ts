@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase' 
+import { api } from '../lib/api'
 import { useAuth } from './useAuth'
 
 export interface OpenFinanceToken {
@@ -20,49 +20,39 @@ export function useIntegrations() {
   const fetchTokens = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data, error } = await supabase
-      .from('open_finance_tokens')
-      .select('*')
-      .eq('ativo', true)
-      .order('criado_em', { ascending: false })
-
-    if (!error && data) setTokens(data)
-    setLoading(false)
+    try {
+      const data = await api.get<OpenFinanceToken[]>('/integracoes')
+      setTokens(data ?? [])
+    } catch {
+      setTokens([])
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => { fetchTokens() }, [fetchTokens])
 
-  // Salva a conexão bancária real no Supabase.
-  // `itemId` é o identificador retornado pelo Widget da Pluggy após autenticação.
+  // Salva a conexao bancaria no backend.
+  // `itemId` e o identificador retornado pelo Widget da Pluggy apos autenticacao.
   const connectBank = async (instituicao: string, itemId: string) => {
-    if (!user) return { error: 'Usuário não autenticado' }
-
-    const expiraEm = new Date()
-    expiraEm.setDate(expiraEm.getDate() + 30)
-
-    const { data, error } = await supabase
-      .from('open_finance_tokens')
-      .insert({
-        id_usuario: user.id,
-        instituicao,
-        access_token_enc: itemId,
-        expira_em: expiraEm.toISOString(),
-      })
-      .select()
-      .single()
-
-    if (!error && data) setTokens(prev => [data, ...prev])
-    return { data, error }
+    if (!user) return { error: 'Usuario nao autenticado' as unknown as Error, data: null }
+    try {
+      const data = await api.post<OpenFinanceToken>('/integracoes', { instituicao, itemId })
+      setTokens(prev => [data, ...prev.filter(t => t.id !== data.id)])
+      return { data, error: null }
+    } catch (err) {
+      return { data: null, error: err as Error }
+    }
   }
 
   const disconnectBank = async (id: string) => {
-    const { error } = await supabase
-      .from('open_finance_tokens')
-      .update({ ativo: false })
-      .eq('id', id)
-
-    if (!error) setTokens(prev => prev.filter(t => t.id !== id))
-    return { error }
+    try {
+      await api.delete(`/integracoes/${id}`)
+      setTokens(prev => prev.filter(t => t.id !== id))
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
   return { tokens, loading, connectBank, disconnectBank }

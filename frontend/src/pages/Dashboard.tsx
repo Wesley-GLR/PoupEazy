@@ -2,31 +2,26 @@ import { useMemo } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTransactions } from '../hooks/useTransactions'
 import { useBudget } from '../hooks/useBudget'
+import { usePeriod } from '../hooks/usePeriod'
 import Card from '../components/ui/Card'
 import PieChart from '../components/charts/PieChart'
-import { formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency, formatDate, isInPeriod, MONTH_NAMES } from '../lib/format'
 import { TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
 
-// Painel consolidado do mês atual:
+// Painel consolidado do período selecionado:
 // usa transações confirmadas para evitar distorção de dados pendentes/cancelados.
 export default function Dashboard() {
   const { profile } = useAuth()
   const { transactions, loading: txLoading } = useTransactions()
   const { budgets, loading: budgetLoading } = useBudget()
+  const { mes, ano } = usePeriod()
 
-  const now = new Date()
-  const currentMonth = now.getMonth() + 1
-  const currentYear = now.getFullYear()
+  const currentBudget = budgets.find(b => b.mes === mes && b.ano === ano)
 
-  const currentBudget = budgets.find(b => b.mes === currentMonth && b.ano === currentYear)
-
-  // Recorte mensal da movimentação confirmada (base para cards e gráficos).
+  // Recorte do período selecionado para a movimentação confirmada (base para cards e gráficos).
   const monthTx = useMemo(() =>
-    transactions.filter(t => {
-      const d = new Date(t.data_transacao + 'T00:00:00')
-      return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear && t.status === 'confirmada'
-    }),
-    [transactions, currentMonth, currentYear]
+    transactions.filter(t => t.status === 'confirmada' && isInPeriod(t.data_transacao, mes, ano)),
+    [transactions, mes, ano]
   )
 
   const totalReceitas = monthTx.filter(t => t.tipo === 'receita').reduce((s, t) => s + Number(t.valor), 0)
@@ -45,7 +40,13 @@ export default function Dashboard() {
       .sort((a, b) => b.value - a.value)
   }, [monthTx])
 
-  const recentTx = transactions.slice(0, 5)
+  // Transações recentes do período selecionado.
+  const recentTx = useMemo(() =>
+    transactions
+      .filter(t => isInPeriod(t.data_transacao, mes, ano))
+      .slice(0, 5),
+    [transactions, mes, ano]
+  )
   const loading = txLoading || budgetLoading
 
   if (loading) {
@@ -63,6 +64,7 @@ export default function Dashboard() {
         <p className="text-lg font-semibold text-muted">
           Bem-vindo de volta{profile?.nome ? `, ${profile.nome}` : ''}.
         </p>
+        <p className="text-sm text-muted">{MONTH_NAMES[mes - 1]} de {ano}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -113,9 +115,9 @@ export default function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold text-[#1E1E1E]">Transações Recentes</h2>
+          <h2 className="mb-4 text-xl font-semibold text-[#1E1E1E]">Transações do período</h2>
           {recentTx.length === 0 ? (
-            <p className="py-8 text-center text-muted">Nenhuma transação registrada ainda.</p>
+            <p className="py-8 text-center text-muted">Nenhuma transação neste período.</p>
           ) : (
             <div className="space-y-3">
               {recentTx.map(tx => (

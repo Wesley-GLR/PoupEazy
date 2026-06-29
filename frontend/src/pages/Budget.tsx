@@ -1,89 +1,112 @@
-import { useState, useMemo, type FormEvent } from 'react'
+import { useState, useMemo, useEffect, type FormEvent } from 'react'
 import { useBudget } from '../hooks/useBudget'
 import { useTransactions } from '../hooks/useTransactions'
 import { useAuth } from '../hooks/useAuth'
+import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
 import ProgressBar from '../components/ui/ProgressBar'
 import BarChart from '../components/charts/BarChart'
-import { formatCurrency, MONTH_NAMES } from '../lib/format'
+import { formatCurrency, isInPeriod, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Tela de orçamento:
-// compara planejado vs realizado e permite ajustes por mês/ano.
+// compara planejado vs gasto (somente despesas) e respeita o período global.
+// O percentual de consumo é gasto/planejado — não usamos valor_real do banco
+// (que é saldo líquido despesas - receitas e pode ficar negativo).
 export default function Budget() {
   const { user } = useAuth()
   const { budgets, loading, addBudget, updateBudget } = useBudget()
   const { transactions } = useTransactions()
+  const { mes, ano } = usePeriod()
 
-  const now = new Date()
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  const [mes, setMes] = useState(now.getMonth() + 1)
-  const [ano, setAno] = useState(now.getFullYear())
+  const [mesForm, setMesForm] = useState(mes)
+  const [anoForm, setAnoForm] = useState(ano)
   const [valorPlanejado, setValorPlanejado] = useState('')
+
+  // Soma de despesas e receitas confirmadas para um mês/ano específico.
+  function statsFor(m: number, a: number) {
+    let gasto = 0
+    let receitas = 0
+    transactions.forEach(t => {
+      if (t.status !== 'confirmada') return
+      if (!isInPeriod(t.data_transacao, m, a)) return
+      if (t.tipo === 'despesa') gasto += Number(t.valor)
+      else if (t.tipo === 'receita') receitas += Number(t.valor)
+    })
+    return { gasto, receitas, saldo: receitas - gasto }
+  }
 
   // Recorte anual para visão histórica e gráfico comparativo.
   const yearBudgets = useMemo(() =>
     budgets
-      .filter(b => b.ano === selectedYear)
+      .filter(b => b.ano === ano)
       .sort((a, b) => a.mes - b.mes),
-    [budgets, selectedYear]
+    [budgets, ano]
   )
 
-  // Dados no formato esperado pelo gráfico de barras.
+  // Planejado vs gasto (despesas) por mês — base do gráfico de barras.
   const chartData = useMemo(() =>
     yearBudgets.map(b => ({
       name: MONTH_NAMES[b.mes - 1].substring(0, 3),
       planejado: Number(b.valor_planejado),
-      real: Number(b.valor_real),
+      gasto: statsFor(b.mes, b.ano).gasto,
     })),
-    [yearBudgets]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yearBudgets, transactions]
   )
 
-  const currentMonthBudget = yearBudgets.find(b => b.mes === now.getMonth() + 1 && b.ano === now.getFullYear())
+  const selectedBudget = budgets.find(b => b.mes === mes && b.ano === ano)
+  const selectedStats = useMemo(() => statsFor(mes, ano), [mes, ano, transactions])
+  const planejado = selectedBudget ? Number(selectedBudget.valor_planejado) : 0
+  const disponivel = planejado - selectedStats.gasto
+  const consumoPct = planejado > 0 ? (selectedStats.gasto / planejado) * 100 : 0
 
-  // Breakdown de despesas confirmadas do mês atual para apoiar análise rápida.
+  // Breakdown de despesas confirmadas do mês selecionado.
   const categoryBreakdown = useMemo(() => {
-    if (!currentMonthBudget) return []
-    const monthTx = transactions.filter(t => {
-      const d = new Date(t.data_transacao + 'T00:00:00')
-      return d.getMonth() + 1 === now.getMonth() + 1
-        && d.getFullYear() === now.getFullYear()
-        && t.tipo === 'despesa'
-        && t.status === 'confirmada'
-    })
-
     const map = new Map<string, number>()
-    monthTx.forEach(t => {
-      const name = t.categoria?.nome ?? 'Outros'
-      map.set(name, (map.get(name) ?? 0) + Number(t.valor))
-    })
-
+    transactions
+      .filter(t => t.status === 'confirmada' && t.tipo === 'despesa' && isInPeriod(t.data_transacao, mes, ano))
+      .forEach(t => {
+        const name = t.categoria?.nome ?? 'Outros'
+        map.set(name, (map.get(name) ?? 0) + Number(t.valor))
+      })
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [transactions, currentMonthBudget, now])
+  }, [transactions, mes, ano])
 
   function resetForm() {
-    setMes(now.getMonth() + 1)
-    setAno(now.getFullYear())
+    setMesForm(mes)
+    setAnoForm(ano)
     setValorPlanejado('')
     setEditingId(null)
   }
 
+  // Mantém o formulário "Novo Orçamento" sincronizado com o período selecionado.
+  useEffect(() => {
+    if (!modalOpen) {
+      setMesForm(mes)
+      setAnoForm(ano)
+    }
+  }, [mes, ano, modalOpen])
+
   function openNew() {
-    resetForm()
+    setMesForm(mes)
+    setAnoForm(ano)
+    setValorPlanejado('')
+    setEditingId(null)
     setModalOpen(true)
   }
 
   function openEdit(id: string) {
     const b = budgets.find(x => x.id === id)
     if (!b) return
-    setMes(b.mes)
-    setAno(b.ano)
+    setMesForm(b.mes)
+    setAnoForm(b.ano)
     setValorPlanejado(String(b.valor_planejado))
     setEditingId(id)
     setModalOpen(true)
@@ -93,7 +116,6 @@ export default function Budget() {
     e.preventDefault()
     if (!user) return
 
-    // Edição altera só o valor planejado; mês/ano permanecem como identidade do orçamento.
     if (editingId) {
       const { error } = await updateBudget(editingId, { valor_planejado: parseFloat(valorPlanejado) })
       if (error) toast.error('Erro ao atualizar orçamento.')
@@ -101,8 +123,8 @@ export default function Budget() {
     } else {
       const { error } = await addBudget({
         id_usuario: user.id,
-        mes,
-        ano,
+        mes: mesForm,
+        ano: anoForm,
         valor_planejado: parseFloat(valorPlanejado),
       })
       if (error) toast.error('Erro ao criar orçamento. Já existe um para este mês?')
@@ -124,60 +146,60 @@ export default function Budget() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-black">Orçamento</h1>
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedYear}
-            onChange={e => setSelectedYear(Number(e.target.value))}
-            className="rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-          >
-            {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <button
-            onClick={openNew}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-light"
-          >
-            <Plus size={18} /> Novo Orçamento
-          </button>
+        <div>
+          <h1 className="text-3xl font-bold text-black">Orçamento</h1>
+          <p className="text-sm text-muted">{MONTH_NAMES[mes - 1]} de {ano}</p>
         </div>
+        <button
+          onClick={openNew}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-light"
+        >
+          <Plus size={18} /> Novo Orçamento
+        </button>
       </div>
 
-      {currentMonthBudget && (
+      {selectedBudget ? (
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#1E1E1E]">
-              {MONTH_NAMES[currentMonthBudget.mes - 1]} {currentMonthBudget.ano}
+              {MONTH_NAMES[mes - 1]} {ano}
             </h2>
-            <button onClick={() => openEdit(currentMonthBudget.id)} className="rounded p-1 text-muted hover:text-primary">
+            <button onClick={() => openEdit(selectedBudget.id)} className="rounded p-1 text-muted hover:text-primary">
               <Pencil size={16} />
             </button>
           </div>
 
-          <div className="mb-4 grid grid-cols-3 gap-4">
+          <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
               <p className="text-xs font-semibold text-muted">Planejado</p>
-              <p className="text-xl font-bold text-primary">{formatCurrency(Number(currentMonthBudget.valor_planejado))}</p>
+              <p className="text-xl font-bold text-primary">{formatCurrency(planejado)}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-muted">Real</p>
-              <p className="text-xl font-bold text-danger">{formatCurrency(Number(currentMonthBudget.valor_real))}</p>
+              <p className="text-xs font-semibold text-muted">Gasto</p>
+              <p className="text-xl font-bold text-danger">{formatCurrency(selectedStats.gasto)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted">Receitas</p>
+              <p className="text-xl font-bold text-success">{formatCurrency(selectedStats.receitas)}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-muted">Disponível</p>
-              <p className={`text-xl font-bold ${Number(currentMonthBudget.valor_planejado) - Number(currentMonthBudget.valor_real) >= 0 ? 'text-success' : 'text-danger'}`}>
-                {formatCurrency(Number(currentMonthBudget.valor_planejado) - Number(currentMonthBudget.valor_real))}
+              <p className={`text-xl font-bold ${disponivel >= 0 ? 'text-success' : 'text-danger'}`}>
+                {formatCurrency(disponivel)}
               </p>
             </div>
           </div>
 
-          <ProgressBar
-            percent={currentMonthBudget.valor_planejado > 0
-              ? (Number(currentMonthBudget.valor_real) / Number(currentMonthBudget.valor_planejado)) * 100
-              : 0
-            }
-          />
+          <div className="mb-1 flex items-center justify-between text-xs text-muted">
+            <span>Consumo do orçamento</span>
+            <span>{formatCurrency(selectedStats.gasto)} de {formatCurrency(planejado)}</span>
+          </div>
+          <ProgressBar percent={consumoPct} />
+          {selectedStats.gasto > planejado && planejado > 0 && (
+            <p className="mt-2 text-xs font-medium text-danger">
+              Orçamento excedido em {formatCurrency(selectedStats.gasto - planejado)}.
+            </p>
+          )}
 
           {categoryBreakdown.length > 0 && (
             <div className="mt-6">
@@ -193,11 +215,23 @@ export default function Budget() {
             </div>
           )}
         </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-border bg-surface-card p-8 text-center shadow-sm">
+          <p className="mb-3 text-muted">
+            Nenhum orçamento definido para {MONTH_NAMES[mes - 1]} de {ano}.
+          </p>
+          <button
+            onClick={openNew}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-light"
+          >
+            <Plus size={18} /> Criar orçamento para {MONTH_NAMES[mes - 1]}
+          </button>
+        </div>
       )}
 
       {chartData.length > 0 && (
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-[#1E1E1E]">Planejado vs Real — {selectedYear}</h2>
+          <h2 className="mb-4 text-lg font-semibold text-[#1E1E1E]">Planejado vs Gasto — {ano}</h2>
           <BarChart data={chartData} />
         </div>
       )}
@@ -209,21 +243,22 @@ export default function Budget() {
               <tr className="border-b border-border bg-surface">
                 <th className="px-4 py-3 text-left font-semibold">Mês</th>
                 <th className="px-4 py-3 text-right font-semibold">Planejado</th>
-                <th className="px-4 py-3 text-right font-semibold">Real</th>
-                <th className="px-4 py-3 text-right font-semibold">Desvio</th>
+                <th className="px-4 py-3 text-right font-semibold">Gasto</th>
+                <th className="px-4 py-3 text-right font-semibold">Disponível</th>
                 <th className="px-4 py-3 text-center font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody>
               {yearBudgets.map(b => {
-                const desvio = Number(b.valor_real) - Number(b.valor_planejado)
+                const gasto = statsFor(b.mes, b.ano).gasto
+                const disp = Number(b.valor_planejado) - gasto
                 return (
                   <tr key={b.id} className="border-b border-border/50 hover:bg-surface/50">
                     <td className="px-4 py-3 font-medium">{MONTH_NAMES[b.mes - 1]}</td>
                     <td className="px-4 py-3 text-right text-primary">{formatCurrency(Number(b.valor_planejado))}</td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(Number(b.valor_real))}</td>
-                    <td className={`px-4 py-3 text-right font-medium ${desvio > 0 ? 'text-danger' : 'text-success'}`}>
-                      {desvio > 0 ? '+' : ''}{formatCurrency(desvio)}
+                    <td className="px-4 py-3 text-right text-danger">{formatCurrency(gasto)}</td>
+                    <td className={`px-4 py-3 text-right font-medium ${disp >= 0 ? 'text-success' : 'text-danger'}`}>
+                      {formatCurrency(disp)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => openEdit(b.id)} className="rounded p-1 text-muted hover:text-primary">
@@ -239,7 +274,7 @@ export default function Budget() {
       )}
 
       {yearBudgets.length === 0 && (
-        <p className="py-12 text-center text-muted">Nenhum orçamento para {selectedYear}. Crie o primeiro!</p>
+        <p className="py-12 text-center text-muted">Nenhum orçamento para {ano}. Crie o primeiro!</p>
       )}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); resetForm() }} title={editingId ? 'Editar Orçamento' : 'Novo Orçamento'}>
@@ -249,8 +284,8 @@ export default function Budget() {
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted">Mês</label>
                 <select
-                  value={mes}
-                  onChange={e => setMes(Number(e.target.value))}
+                  value={mesForm}
+                  onChange={e => setMesForm(Number(e.target.value))}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                 >
                   {MONTH_NAMES.map((name, i) => (
@@ -262,8 +297,8 @@ export default function Budget() {
                 <label className="mb-1 block text-xs font-semibold text-muted">Ano</label>
                 <input
                   type="number"
-                  value={ano}
-                  onChange={e => setAno(Number(e.target.value))}
+                  value={anoForm}
+                  onChange={e => setAnoForm(Number(e.target.value))}
                   min={2000}
                   max={2100}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"

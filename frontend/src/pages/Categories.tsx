@@ -2,9 +2,10 @@ import { useState, useMemo, type FormEvent } from 'react'
 import { useCategories } from '../hooks/useCategories'
 import { useTransactions } from '../hooks/useTransactions'
 import { useAuth } from '../hooks/useAuth'
+import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
 import PieChart from '../components/charts/PieChart'
-import { formatCurrency } from '../lib/format'
+import { isInPeriod, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -19,6 +20,7 @@ export default function Categories() {
   const { user } = useAuth()
   const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories()
   const { transactions } = useTransactions()
+  const { mes, ano } = usePeriod()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -26,11 +28,11 @@ export default function Categories() {
   const [tipo, setTipo] = useState<'despesa_fixa' | 'despesa_variavel' | 'receita'>('despesa_variavel')
   const [icone, setIcone] = useState('')
 
-  // Gráfico de distribuição considera apenas despesas confirmadas.
+  // Gráfico de distribuição considera apenas despesas confirmadas do período selecionado.
   const chartData = useMemo(() => {
     const map = new Map<string, number>()
     transactions
-      .filter(t => t.tipo === 'despesa' && t.status === 'confirmada')
+      .filter(t => t.tipo === 'despesa' && t.status === 'confirmada' && isInPeriod(t.data_transacao, mes, ano))
       .forEach(t => {
         const name = t.categoria?.nome ?? 'Outros'
         map.set(name, (map.get(name) ?? 0) + Number(t.valor))
@@ -38,9 +40,7 @@ export default function Categories() {
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [transactions])
-
-  const totalDespesas = chartData.reduce((s, d) => s + d.value, 0)
+  }, [transactions, mes, ano])
 
   function resetForm() {
     setNome('')
@@ -125,12 +125,14 @@ export default function Categories() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-[#1E1E1E]">Despesas por Categoria</h2>
-          <PieChart data={chartData} />
-          {totalDespesas > 0 && (
-            <p className="mt-2 text-center text-sm text-muted">
-              Total: {formatCurrency(totalDespesas)}
-            </p>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[#1E1E1E]">Despesas por Categoria</h2>
+            <span className="text-xs font-medium text-muted">{MONTH_NAMES[mes - 1]}/{ano}</span>
+          </div>
+          {chartData.length > 0 ? (
+            <PieChart data={chartData} />
+          ) : (
+            <p className="py-8 text-center text-muted">Nenhuma despesa neste período.</p>
           )}
         </div>
 

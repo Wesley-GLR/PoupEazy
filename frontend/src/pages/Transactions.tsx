@@ -3,8 +3,9 @@ import { useTransactions } from '../hooks/useTransactions'
 import { useCategories } from '../hooks/useCategories'
 import { useBudget } from '../hooks/useBudget'
 import { useAuth } from '../hooks/useAuth'
+import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
-import { formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency, formatDate, isInPeriod, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil, Trash2, Search, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -15,10 +16,13 @@ export default function Transactions() {
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } = useTransactions()
   const { categories } = useCategories()
   const { getOrCreateBudget } = useBudget()
+  const { mes, ano } = usePeriod()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'todos' | 'despesa' | 'receita'>('todos')
+  // Por padrão mostra apenas o período selecionado; o usuário pode ver tudo.
+  const [onlyPeriod, setOnlyPeriod] = useState(true)
 
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
@@ -26,14 +30,15 @@ export default function Transactions() {
   const [categoriaId, setCategoriaId] = useState('')
   const [dataTransacao, setDataTransacao] = useState(new Date().toISOString().split('T')[0])
 
-  // Filtro local para busca textual + filtro de tipo sem nova consulta ao banco.
+  // Filtro local: período global (opcional) + busca textual + tipo, sem nova consulta ao banco.
   const filteredTx = useMemo(() =>
     transactions.filter(tx => {
+      const matchPeriod = !onlyPeriod || isInPeriod(tx.data_transacao, mes, ano)
       const matchSearch = tx.descricao.toLowerCase().includes(search.toLowerCase())
       const matchType = filterType === 'todos' || tx.tipo === filterType
-      return matchSearch && matchType
+      return matchPeriod && matchSearch && matchType
     }),
-    [transactions, search, filterType]
+    [transactions, search, filterType, onlyPeriod, mes, ano]
   )
 
   // Regras de categoria por tipo de lançamento:
@@ -159,6 +164,22 @@ export default function Transactions() {
           <option value="despesa">Despesas</option>
           <option value="receita">Receitas</option>
         </select>
+        <div className="flex overflow-hidden rounded-lg border border-border">
+          <button
+            type="button"
+            onClick={() => setOnlyPeriod(true)}
+            className={`px-3 py-2 text-sm font-medium transition ${onlyPeriod ? 'bg-primary text-white' : 'bg-white text-muted hover:bg-surface'}`}
+          >
+            {MONTH_NAMES[mes - 1]}/{ano}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOnlyPeriod(false)}
+            className={`px-3 py-2 text-sm font-medium transition ${!onlyPeriod ? 'bg-primary text-white' : 'bg-white text-muted hover:bg-surface'}`}
+          >
+            Todos
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-surface-card shadow-sm">

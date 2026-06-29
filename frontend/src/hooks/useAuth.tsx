@@ -1,13 +1,24 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { api, setToken, clearToken, getToken, ApiError } from '../lib/api'
 import type { Profile } from '../types/database'
 
-// Contexto global de autenticação:
-// centraliza sessão, perfil e ações de login/cadastro/logout.
+// Usuario autenticado (campos retornados pelo backend proprio).
+export interface AuthUser {
+  id: string
+  email: string
+  criado_em?: string
+}
+
+interface AuthResponse {
+  token: string
+  user: AuthUser
+  profile: Profile | null
+}
+
+// Contexto global de autenticacao:
+// centraliza usuario, perfil e acoes de login/cadastro/logout usando JWT no localStorage.
 interface AuthContextType {
-  user: User | null
-  session: Session | null
+  user: AuthUser | null
   profile: Profile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -21,94 +32,100 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Carrega dados complementares do usuário na tabela `profiles`.
-  async function fetchProfile(userId: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    setProfile(data)
-  }
-
   useEffect(() => {
-    // 1) Recupera sessão já persistida no navegador.
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s)
-      setUser(s?.user ?? null)
-      if (s?.user) fetchProfile(s.user.id)
-      setLoading(false)
-    })
-
-    // 2) Escuta mudanças de autenticação (login, logout, refresh).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s)
-      setUser(s?.user ?? null)
-      if (s?.user) fetchProfile(s.user.id)
-      else setProfile(null)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+    // Recupera a sessao a partir do token salvo no navegador.
+    async function restore() {
+      if (!getToken()) {
+        setLoading(false)
+        return
+      }
+      try {
+        const data = await api.get<{ user: AuthUser; profile: Profile | null }>('/auth/me')
+        setUser(data.user)
+        setProfile(data.profile)
+      } catch {
+        // Token invalido/expirado: limpa estado.
+        clearToken()
+        setUser(null)
+        setProfile(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    restore()
   }, [])
 
-  // Login por e-mail/senha.
+  // Login por e-mail/senha: guarda o JWT e popula usuario + perfil.
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error as Error | null }
+    try {
+      const data = await api.post<AuthResponse>('/auth/login', { email, password }, { auth: false })
+      setToken(data.token)
+      setUser(data.user)
+      setProfile(data.profile)
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
-  // Cadastro: os metadados viram base para criação automática do profile no banco.
+  // Cadastro: cria a conta no backend. Nao autentica automaticamente
+  // (a tela de cadastro redireciona para o login, mantendo o fluxo original).
   async function signUp(email: string, password: string, nome: string, telefone?: string) {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { nome, telefone: telefone || null },
-      },
-    })
-    return { error: error as Error | null }
+    try {
+      await api.post<AuthResponse>(
+        '/auth/register',
+        { email, password, nome, telefone: telefone || null },
+        { auth: false }
+      )
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
-  // Logout também limpa estado local de profile para evitar dados "fantasma" na UI.
+  // Logout: descarta o token e limpa o estado local.
   async function signOut() {
-    await supabase.auth.signOut()
+    clearToken()
+    setUser(null)
     setProfile(null)
   }
 
-  // Atualização explícita de profile com recarga posterior para manter UI sincronizada.
+  // Atualiza o profile e re-sincroniza o estado local.
   async function updateProfile(data: Partial<Profile>) {
     if (!user) return
-    await supabase.from('profiles').update(data as Record<string, unknown>).eq('id', user.id)
-    await fetchProfile(user.id)
+    const updated = await api.patch<Profile>('/profile', data)
+    setProfile(updated)
   }
 
-  // Dispara o e-mail de recuperação de senha do Supabase Auth.
-  // O `redirectTo` precisa estar liberado em Authentication → URL Configuration → Redirect URLs.
+  // Solicita recuperacao de senha. Em desenvolvimento o backend retorna o resetToken
+  // no corpo da resposta (para testar via Postman, sem servidor de e-mail).
   async function resetPassword(email: string) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
-    })
-    return { error: error as Error | null }
+    try {
+      await api.post('/auth/forgot-password', { email }, { auth: false })
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
-  // Atualiza a senha do usuário autenticado (também usado após o clique no link de recuperação,
-  // momento em que o Supabase cria uma sessão temporária via evento PASSWORD_RECOVERY).
+  // Troca de senha do usuario autenticado.
   async function updatePassword(newPassword: string) {
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    return { error: error as Error | null }
+    try {
+      await api.patch('/auth/password', { novaSenha: newPassword })
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         profile,
         loading,
         signIn,
@@ -130,3 +147,6 @@ export function useAuth() {
   if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider')
   return context
 }
+
+// Re-exporta o ApiError para quem precisar inspecionar status HTTP.
+export { ApiError }

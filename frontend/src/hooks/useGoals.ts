@@ -1,48 +1,79 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 import type { Meta } from '../types/database'
 import { useAuth } from './useAuth'
 
-// Hook de metas financeiras (CRUD e sincronização local após mutações).
+// Hook de metas financeiras (CRUD e sincronizacao local apos mutacoes).
 export function useGoals() {
   const { user } = useAuth()
   const [goals, setGoals] = useState<Meta[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Ordenação por prazo facilita priorização de metas mais próximas do vencimento.
   const fetch = useCallback(async () => {
     if (!user) return
     setLoading(true)
-
-    const { data } = await supabase
-      .from('metas')
-      .select('*')
-      .eq('id_usuario', user.id)
-      .order('data_limite', { ascending: true })
-
-    setGoals((data as Meta[] | null) ?? [])
-    setLoading(false)
+    try {
+      const data = await api.get<Meta[]>('/metas')
+      setGoals(data ?? [])
+    } catch {
+      setGoals([])
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => { fetch() }, [fetch])
 
   async function addGoal(goal: Record<string, unknown>) {
-    const { error } = await supabase.from('metas').insert(goal)
-    if (!error) await fetch()
-    return { error }
+    try {
+      await api.post('/metas', goal)
+      await fetch()
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
   async function updateGoal(id: string, data: Record<string, unknown>) {
-    const { error } = await supabase.from('metas').update(data).eq('id', id)
-    if (!error) await fetch()
-    return { error }
+    try {
+      await api.patch(`/metas/${id}`, data)
+      await fetch()
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
   async function deleteGoal(id: string) {
-    const { error } = await supabase.from('metas').delete().eq('id', id)
-    if (!error) await fetch()
-    return { error }
+    try {
+      await api.delete(`/metas/${id}`)
+      await fetch()
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
   }
 
-  return { goals, loading, refresh: fetch, addGoal, updateGoal, deleteGoal }
+  // Registra uma transacao (aporte/retirada) vinculada a meta.
+  // O trigger fn_sync_metas_valor_atual no banco atualiza valor_atual automaticamente.
+  // Requer id_orcamento valido (buscar/criar antes de chamar).
+  async function addGoalTransaction(tx: {
+    id_orcamento: string
+    id_metas: string
+    id_categoria: string
+    valor: number
+    data_transacao: string
+    descricao: string
+    tipo: 'despesa' | 'receita'
+  }) {
+    try {
+      await api.post('/despesas', { ...tx, origem: 'manual', status: 'confirmada' })
+      await fetch()
+      return { error: null }
+    } catch (err) {
+      return { error: err as Error }
+    }
+  }
+
+  return { goals, loading, refresh: fetch, addGoal, updateGoal, deleteGoal, addGoalTransaction }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PluggyConnect } from "react-pluggy-connect";
+import { api } from "../lib/api";
 import { useTransactions } from "../hooks/useTransactions";
 import { useBudget } from "../hooks/useBudget";
 import { useCategories } from "../hooks/useCategories";
@@ -29,22 +30,21 @@ export default function Integrations() {
   const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
   const [tokenParaExcluir, setTokenParaExcluir] = useState<OpenFinanceToken | null>(null);
 
-  // Assim que a tela carrega, pede permissão ao nosso backend Node.js
+  // Assim que a tela carrega, pede permissão ao nosso backend
   useEffect(() => {
     async function getConnectToken() {
       try {
-        const response = await fetch("http://localhost:3001/api/pluggy/token");
-        const data = await response.json();
+        const data = await api.get<{ connectToken?: string }>("/pluggy/token");
         if (data.connectToken) {
           setConnectToken(data.connectToken);
         } else {
           toast.error(
-            "Erro ao gerar token. Verifique as chaves no .env do backend.",
+            "Erro ao gerar token. Verifique as chaves da Pluggy no .env do backend.",
           );
         }
       } catch (error) {
         toast.error(
-          "Não conseguiu conectar com o Node.js. Ele está a rodar na porta 3001?",
+          "Não conseguiu conectar com o backend. Ele está rodando na porta 3001?",
         );
       }
     }
@@ -114,7 +114,7 @@ export default function Integrations() {
     const instituicao = itemData.item.connector.name;
     const itemId = itemData.item.id;
 
-    // Salva a conexão bancária no Supabase (em vez de localStorage)
+    // Salva a conexão bancária no backend
     const { error: connectError } = await connectBank(instituicao, itemId);
     if (connectError) {
       toast.error("Erro ao salvar a conexão bancária no banco de dados.");
@@ -137,10 +137,9 @@ export default function Integrations() {
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:3001/api/pluggy/transactions/${itemId}`,
+      const { transactions } = await api.get<{ transactions: Array<{ descricao: string; valor: number; tipo: "despesa" | "receita"; data: string }> }>(
+        `/pluggy/transactions/${itemId}`,
       );
-      const { transactions } = await response.json();
 
       let sucessoCount = 0;
 
@@ -177,7 +176,7 @@ export default function Integrations() {
     setMostrarModalExcluir(true);
   };
 
-  // Executa a exclusão real após a confirmação no Pop-up (desativa no Supabase)
+  // Executa a exclusão real após a confirmação no Pop-up (desativa no backend)
   const confirmarExclusao = async () => {
     if (tokenParaExcluir) {
       const { error } = await disconnectBank(tokenParaExcluir.id);
@@ -211,7 +210,7 @@ export default function Integrations() {
           </div>
         </div>
 
-        {/* 1. LISTA DE BANCOS CONECTADOS (dados do Supabase) */}
+        {/* 1. LISTA DE BANCOS CONECTADOS (dados do backend) */}
         {loadingTokens ? (
           <div className="flex items-center justify-center gap-2 text-muted text-sm mb-6 bg-surface p-4 rounded-lg border border-dashed border-border">
             <Loader2 size={16} className="animate-spin" />
