@@ -10,7 +10,7 @@
 
 1. No menu lateral, clique em **📂 Categorias**
 2. Você verá as categorias divididas entre:
-   - **Categorias do Sistema** (protegidas, não editáveis) — marcadas com ícone de cadeado
+   - **Categorias do Sistema** (protegidas, não editáveis) — marcadas com ícone de escudo (ShieldCheck)
    - **Minhas Categorias** (personalizadas) — criadas por você
 
 ### 2. Criar uma nova categoria

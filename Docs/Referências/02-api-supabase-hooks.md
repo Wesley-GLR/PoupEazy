@@ -14,21 +14,26 @@ O PoupEazy não possui backend customizado. A comunicação é feita via `@supab
 
 ## Hooks
 
-### `useAuth` — `frontend/src/hooks/useAuth.ts`
+### `useAuth` — `frontend/src/hooks/useAuth.tsx`
 
 | Propriedade | Tipo | Descrição |
 |-------------|------|-----------|
 | `user` | `User \| null` | Usuário autenticado |
+| `session` | `Session \| null` | Sessão Supabase ativa |
 | `profile` | `Profile \| null` | Dados do profile |
-| `signUp(email, password, nome)` | `async` | Criar conta |
+| `loading` | `boolean` | Indica se o estado de autenticação está sendo resolvido |
+| `signUp(email, password, nome, telefone?)` | `async` | Criar conta (telefone é opcional) |
 | `signIn(email, password)` | `async` | Login |
 | `signOut()` | `async` | Logout |
+| `updateProfile(data)` | `async` | Atualizar dados do profile |
 
 ### `useTransactions` — `frontend/src/hooks/useTransactions.ts`
 
 | Propriedade | Tipo | Descrição |
 |-------------|------|-----------|
-| `transactions` | `Despesa[]` | Lista de transações |
+| `transactions` | `DespesaComCategoria[]` | Lista de transações com categoria via join |
+| `loading` | `boolean` | Indica se está carregando |
+| `refresh` | `() => Promise` | Recarrega a lista de transações |
 | `addTransaction(data)` | `async` | Criar transação |
 | `updateTransaction(id, data)` | `async` | Atualizar |
 | `deleteTransaction(id)` | `async` | Remover |
@@ -40,15 +45,19 @@ O PoupEazy não possui backend customizado. A comunicação é feita via `@supab
 | Propriedade | Tipo | Descrição |
 |-------------|------|-----------|
 | `budgets` | `Orcamento[]` | Orçamentos mensais |
+| `loading` | `boolean` | Indica se está carregando |
+| `refresh` | `() => Promise` | Recarrega a lista de orçamentos |
 | `addBudget(data)` | `async` | Criar orçamento |
 | `updateBudget(id, data)` | `async` | Atualizar |
-| `deleteBudget(id)` | `async` | Remover |
+| `getOrCreateBudget(mes, ano)` | `async → Orcamento \| null` | Obtém orçamento existente ou cria com valor_planejado = 0 |
 
 ### `useGoals` — `frontend/src/hooks/useGoals.ts`
 
 | Propriedade | Tipo | Descrição |
 |-------------|------|-----------|
 | `goals` | `Meta[]` | Metas financeiras |
+| `loading` | `boolean` | Indica se está carregando |
+| `refresh` | `() => Promise` | Recarrega a lista de metas |
 | `addGoal(data)` | `async` | Criar meta |
 | `updateGoal(id, data)` | `async` | Atualizar |
 | `deleteGoal(id)` | `async` | Remover |
@@ -58,7 +67,10 @@ O PoupEazy não possui backend customizado. A comunicação é feita via `@supab
 | Propriedade | Tipo | Descrição |
 |-------------|------|-----------|
 | `categories` | `Categoria[]` | Categorias (sistema + pessoais) |
+| `loading` | `boolean` | Indica se está carregando |
+| `refresh` | `() => Promise` | Recarrega a lista de categorias |
 | `addCategory(data)` | `async` | Criar categoria |
+| `updateCategory(id, data)` | `async` | Atualizar categoria |
 | `deleteCategory(id)` | `async` | Remover (somente pessoais) |
 
 ---

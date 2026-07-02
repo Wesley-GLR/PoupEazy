@@ -130,13 +130,13 @@ O terminal exibirá algo como:
   ➜  Network: http://192.168.x.x:5173/
 ```
 
-Abra o navegador em **http://localhost:5173/** e você verá a tela de login do PoupEazy! 🎉
+Abra o navegador em **http://localhost:5173/** e você verá a landing page do PoupEazy!
 
 ---
 
 ## Passo 6 — Criar sua primeira conta
 
-1. Na tela de login, clique em **Cadastre-se**
+1. Na landing page, clique em **Cadastre-se** (ou acesse `/cadastro` diretamente)
 2. Preencha:
    - **Nome completo**
    - **E-mail** (pode ser qualquer e-mail válido)

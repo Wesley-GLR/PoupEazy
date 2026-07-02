@@ -47,7 +47,7 @@ O PoupEazy ajuda usuários a controlar gastos, definir metas financeiras e acomp
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/PoupEazy.git
+git clone https://github.com/Wesley-GLR/PoupEazy.git
 cd PoupEazy
 ```
 
@@ -104,6 +104,7 @@ PoupEazy/
 │   │   │   ├── ui/                # Card, ProgressBar, Modal
 │   │   │   └── charts/            # PieChart, BarChart (Recharts)
 │   │   ├── pages/
+│   │   │   ├── Landing.tsx
 │   │   │   ├── Login.tsx
 │   │   │   ├── Register.tsx
 │   │   │   ├── Dashboard.tsx

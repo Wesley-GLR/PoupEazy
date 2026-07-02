@@ -26,8 +26,8 @@
 ## Arquivo `.env.example`
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
 ---
