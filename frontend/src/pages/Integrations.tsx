@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { PluggyConnect } from "react-pluggy-connect";
 import { api } from "../lib/api";
 import { useTransactions } from "../hooks/useTransactions";
@@ -137,7 +137,7 @@ export default function Integrations() {
         return;
       }
 
-      const { transactions } = await api.get<{ transactions: Array<{ descricao: string; valor: number; tipo: "despesa" | "receita"; data: string }> }>(
+      const { transactions } = await api.get<{ transactions: Array<{ id_externo: string; descricao: string; valor: number; tipo: "despesa" | "receita"; data: string }> }>(
         `/pluggy/transactions/${itemId}`,
       );
 
@@ -156,6 +156,7 @@ export default function Integrations() {
           origem: "open_finance",
           status: "confirmada",
           nlp_metadata: { instituicao, origin: "pluggy_real" },
+          id_externo: tx.id_externo,
         });
         sucessoCount++;
       }
@@ -218,7 +219,7 @@ export default function Integrations() {
           </div>
         ) : tokens.length > 0 ? (
           <div className="space-y-3 mb-6">
-            {tokens.map((token) => (
+            {tokens.map((token: OpenFinanceToken) => (
               <div
                 key={token.id}
                 className="bg-success/10 border border-success/30 rounded-lg p-4 flex items-center justify-between"
@@ -273,10 +274,10 @@ export default function Integrations() {
               <p className="text-xs text-muted mb-3">
                 Carregando janela de autenticação segura...
               </p>
-              <PluggyConnect
+                <PluggyConnect
                 connectToken={connectToken}
                 includeSandbox={true}
-                onSuccess={(data) => {
+                onSuccess={(data: any) => {
                   setAbrirPluggy(false);
                   handleSuccess(data);
                 }}
