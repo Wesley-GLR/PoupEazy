@@ -16,10 +16,19 @@ export default function Dashboard() {
   const { budgets, loading: budgetLoading } = useBudget()
   const { mes, ano, dataInicio, dataFim, modo } = usePeriod()
 
-  // No modo personalizado, busca o orçamento do mês inicial do período selecionado
-  const budgetMonth = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
-  const budgetYear = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
-  const currentBudget = budgets.find(b => b.mes === budgetMonth && b.ano === budgetYear)
+  // Filtra todos os orçamentos que pertencem ao período selecionado (mês ou personalizado).
+  const selectedBudgets = useMemo(() => {
+    return budgets.filter(b => {
+      const start = new Date(dataInicio + 'T00:00:00')
+      const end = new Date(dataFim + 'T00:00:00')
+      const startVal = start.getFullYear() * 12 + start.getMonth()
+      const endVal = end.getFullYear() * 12 + end.getMonth()
+      const budgetVal = b.ano * 12 + (b.mes - 1)
+      return budgetVal >= startVal && budgetVal <= endVal
+    })
+  }, [budgets, dataInicio, dataFim])
+
+  const totalOrcamento = selectedBudgets.reduce((sum, b) => sum + Number(b.valor_planejado), 0)
 
   // Recorte do período selecionado para a movimentação confirmada (base para cards e gráficos).
   const monthTx = useMemo(() =>
@@ -112,10 +121,11 @@ export default function Dashboard() {
           <div>
             <p className="text-sm font-semibold text-muted">Orçamento</p>
             <p className="text-2xl font-bold text-[#1E1E1E]">
-              {currentBudget ? formatCurrency(currentBudget.valor_planejado) : 'N/A'}
+              {selectedBudgets.length > 0 ? formatCurrency(totalOrcamento) : 'N/A'}
             </p>
           </div>
         </Card>
+
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
