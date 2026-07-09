@@ -41,6 +41,9 @@ export default function Goals() {
   // --- Cards expandidos (mostrar histórico da meta) ---
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // Guarda contra cliques duplos nos formulários.
+  const [submitting, setSubmitting] = useState(false)
+
   // Metas ativas ficam no topo com ações rápidas.
   const activeGoals = goals.filter(g => g.status === 'ativa')
   const completedGoals = goals.filter(g => g.status !== 'ativa')
@@ -88,70 +91,80 @@ export default function Goals() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!user) return
+    if (!user || submitting) return
+    setSubmitting(true)
 
-    if (editingId) {
-      const { error } = await updateGoal(editingId, {
-        nome,
-        descricao: descricao || null,
-        valor_objetivo: parseFloat(valorObjetivo),
-        data_limite: dataLimite,
-      })
-      if (error) toast.error('Erro ao atualizar meta.')
-      else toast.success('Meta atualizada!')
-    } else {
-      const { error } = await addGoal({
-        id_usuario: user.id,
-        nome,
-        descricao: descricao || null,
-        valor_objetivo: parseFloat(valorObjetivo),
-        data_limite: dataLimite,
-        status: 'ativa',
-      })
-      if (error) toast.error('Erro ao criar meta.')
-      else toast.success('Meta criada!')
+    try {
+      if (editingId) {
+        const { error } = await updateGoal(editingId, {
+          nome,
+          descricao: descricao || null,
+          valor_objetivo: parseFloat(valorObjetivo),
+          data_limite: dataLimite,
+        })
+        if (error) toast.error('Erro ao atualizar meta.')
+        else toast.success('Meta atualizada!')
+      } else {
+        const { error } = await addGoal({
+          id_usuario: user.id,
+          nome,
+          descricao: descricao || null,
+          valor_objetivo: parseFloat(valorObjetivo),
+          data_limite: dataLimite,
+          status: 'ativa',
+        })
+        if (error) toast.error('Erro ao criar meta.')
+        else toast.success('Meta criada!')
+      }
+
+      setModalOpen(false)
+      resetForm()
+    } finally {
+      setSubmitting(false)
     }
-
-    setModalOpen(false)
-    resetForm()
   }
 
   // Submete um aporte (despesa) ou retirada (receita) vinculado à meta selecionada.
   async function handleTxSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!user || !txGoalId) return
+    if (!user || !txGoalId || submitting) return
+    setSubmitting(true)
 
-    if (!txCategoriaId) {
-      toast.error('Selecione uma categoria.')
-      return
+    try {
+      if (!txCategoriaId) {
+        toast.error('Selecione uma categoria.')
+        return
+      }
+
+      const now = new Date()
+      // Obtém ou cria o orçamento do mês corrente para vincular a transação.
+      const budget = await getOrCreateBudget(now.getMonth() + 1, now.getFullYear())
+      if (!budget) {
+        toast.error('Não foi possível obter o orçamento do mês.')
+        return
+      }
+
+      const { error } = await addGoalTransaction({
+        id_orcamento: budget.id,
+        id_metas: txGoalId,
+        id_categoria: txCategoriaId,
+        valor: parseFloat(txValor),
+        data_transacao: txData,
+        descricao: txDescricao || (txTipo === 'despesa' ? 'Aporte na meta' : 'Retirada da meta'),
+        tipo: txTipo,
+      })
+
+      if (error) {
+        toast.error('Erro ao registrar movimentação.')
+      } else {
+        toast.success(txTipo === 'despesa' ? 'Aporte registrado!' : 'Retirada registrada!')
+        await refreshTransactions()
+      }
+
+      setTxModalOpen(false)
+    } finally {
+      setSubmitting(false)
     }
-
-    const now = new Date()
-    // Obtém ou cria o orçamento do mês corrente para vincular a transação.
-    const budget = await getOrCreateBudget(now.getMonth() + 1, now.getFullYear())
-    if (!budget) {
-      toast.error('Não foi possível obter o orçamento do mês.')
-      return
-    }
-
-    const { error } = await addGoalTransaction({
-      id_orcamento: budget.id,
-      id_metas: txGoalId,
-      id_categoria: txCategoriaId,
-      valor: parseFloat(txValor),
-      data_transacao: txData,
-      descricao: txDescricao || (txTipo === 'despesa' ? 'Aporte na meta' : 'Retirada da meta'),
-      tipo: txTipo,
-    })
-
-    if (error) {
-      toast.error('Erro ao registrar movimentação.')
-    } else {
-      toast.success(txTipo === 'despesa' ? 'Aporte registrado!' : 'Retirada registrada!')
-      await refreshTransactions()
-    }
-
-    setTxModalOpen(false)
   }
 
   async function handleStatusChange(id: string, status: 'concluida' | 'cancelada') {
@@ -358,9 +371,10 @@ export default function Goals() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light"
+            disabled={submitting}
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {editingId ? 'Atualizar' : 'Criar'}
+            {submitting ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
           </button>
         </form>
       </Modal>
@@ -445,9 +459,10 @@ export default function Goals() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light"
+            disabled={submitting}
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirmar
+            {submitting ? 'Salvando...' : 'Confirmar'}
           </button>
         </form>
       </Modal>

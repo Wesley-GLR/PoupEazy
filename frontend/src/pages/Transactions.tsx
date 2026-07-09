@@ -30,6 +30,9 @@ export default function Transactions() {
   const [categoriaId, setCategoriaId] = useState('')
   const [dataTransacao, setDataTransacao] = useState(new Date().toISOString().split('T')[0])
 
+  // Guarda contra cliques duplos no formulário.
+  const [submitting, setSubmitting] = useState(false)
+
   // Filtro local: período global (opcional) + busca textual + tipo, sem nova consulta ao banco.
   const filteredTx = useMemo(() =>
     transactions.filter(tx => {
@@ -79,42 +82,47 @@ export default function Transactions() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!user) return
+    if (!user || submitting) return
+    setSubmitting(true)
 
-    // Regra central: transação sempre aponta para um orçamento (mês/ano da data escolhida).
-    const d = new Date(dataTransacao + 'T00:00:00')
-    const budget = await getOrCreateBudget(d.getMonth() + 1, d.getFullYear())
-    if (!budget) {
-      toast.error('Erro ao criar orçamento do mês.')
-      return
+    try {
+      // Regra central: transação sempre aponta para um orçamento (mês/ano da data escolhida).
+      const d = new Date(dataTransacao + 'T00:00:00')
+      const budget = await getOrCreateBudget(d.getMonth() + 1, d.getFullYear())
+      if (!budget) {
+        toast.error('Erro ao criar orçamento do mês.')
+        return
+      }
+
+      // Payload explícito mantém compatibilidade com regras de trigger e relatórios no banco.
+      const payload = {
+        descricao,
+        valor: parseFloat(valor),
+        tipo,
+        id_categoria: categoriaId,
+        id_orcamento: budget.id,
+        data_transacao: dataTransacao,
+        origem: 'manual' as const,
+        status: 'confirmada' as const,
+        id_metas: null,
+        nlp_metadata: null,
+      }
+
+      if (editingId) {
+        const { error } = await updateTransaction(editingId, payload)
+        if (error) toast.error('Erro ao atualizar transação.')
+        else toast.success('Transação atualizada!')
+      } else {
+        const { error } = await addTransaction(payload)
+        if (error) toast.error('Erro ao criar transação.')
+        else toast.success('Transação criada!')
+      }
+
+      setModalOpen(false)
+      resetForm()
+    } finally {
+      setSubmitting(false)
     }
-
-    // Payload explícito mantém compatibilidade com regras de trigger e relatórios no banco.
-    const payload = {
-      descricao,
-      valor: parseFloat(valor),
-      tipo,
-      id_categoria: categoriaId,
-      id_orcamento: budget.id,
-      data_transacao: dataTransacao,
-      origem: 'manual' as const,
-      status: 'confirmada' as const,
-      id_metas: null,
-      nlp_metadata: null,
-    }
-
-    if (editingId) {
-      const { error } = await updateTransaction(editingId, payload)
-      if (error) toast.error('Erro ao atualizar transação.')
-      else toast.success('Transação atualizada!')
-    } else {
-      const { error } = await addTransaction(payload)
-      if (error) toast.error('Erro ao criar transação.')
-      else toast.success('Transação criada!')
-    }
-
-    setModalOpen(false)
-    resetForm()
   }
 
   async function handleDelete(id: string) {
@@ -315,9 +323,10 @@ export default function Transactions() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light"
+            disabled={submitting}
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {editingId ? 'Atualizar' : 'Criar'}
+            {submitting ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
           </button>
         </form>
       </Modal>

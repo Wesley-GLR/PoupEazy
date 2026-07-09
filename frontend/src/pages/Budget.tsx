@@ -27,6 +27,9 @@ export default function Budget() {
   const [anoForm, setAnoForm] = useState(ano)
   const [valorPlanejado, setValorPlanejado] = useState('')
 
+  // Guarda contra cliques duplos no formulário.
+  const [submitting, setSubmitting] = useState(false)
+
   // Soma de despesas e receitas confirmadas para um mês/ano específico.
   function statsFor(m: number, a: number) {
     let gasto = 0
@@ -114,25 +117,30 @@ export default function Budget() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!user) return
+    if (!user || submitting) return
+    setSubmitting(true)
 
-    if (editingId) {
-      const { error } = await updateBudget(editingId, { valor_planejado: parseFloat(valorPlanejado) })
-      if (error) toast.error('Erro ao atualizar orçamento.')
-      else toast.success('Orçamento atualizado!')
-    } else {
-      const { error } = await addBudget({
-        id_usuario: user.id,
-        mes: mesForm,
-        ano: anoForm,
-        valor_planejado: parseFloat(valorPlanejado),
-      })
-      if (error) toast.error('Erro ao criar orçamento. Já existe um para este mês?')
-      else toast.success('Orçamento criado!')
+    try {
+      if (editingId) {
+        const { error } = await updateBudget(editingId, { valor_planejado: parseFloat(valorPlanejado) })
+        if (error) toast.error('Erro ao atualizar orçamento.')
+        else toast.success('Orçamento atualizado!')
+      } else {
+        const { error } = await addBudget({
+          id_usuario: user.id,
+          mes: mesForm,
+          ano: anoForm,
+          valor_planejado: parseFloat(valorPlanejado),
+        })
+        if (error) toast.error('Erro ao criar orçamento. Já existe um para este mês?')
+        else toast.success('Orçamento criado!')
+      }
+
+      setModalOpen(false)
+      resetForm()
+    } finally {
+      setSubmitting(false)
     }
-
-    setModalOpen(false)
-    resetForm()
   }
 
   if (loading) {
@@ -322,9 +330,10 @@ export default function Budget() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light"
+            disabled={submitting}
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {editingId ? 'Atualizar' : 'Criar'}
+            {submitting ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
           </button>
         </form>
       </Modal>

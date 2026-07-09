@@ -7,4 +7,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  // Garante fallback para index.html em todas as rotas (SPA).
+  appType: 'spa',
 })

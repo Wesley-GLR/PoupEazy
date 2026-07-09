@@ -28,6 +28,9 @@ export default function Categories() {
   const [tipo, setTipo] = useState<'despesa_fixa' | 'despesa_variavel' | 'receita'>('despesa_variavel')
   const [icone, setIcone] = useState('')
 
+  // Guarda contra cliques duplos no formulário.
+  const [submitting, setSubmitting] = useState(false)
+
   // Gráfico de distribuição considera apenas despesas confirmadas do período selecionado.
   const chartData = useMemo(() => {
     const map = new Map<string, number>()
@@ -67,28 +70,33 @@ export default function Categories() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!user) return
+    if (!user || submitting) return
+    setSubmitting(true)
 
-    const payload = {
-      nome,
-      tipo,
-      icone: icone || null,
-      sistema: false,
-      id_usuario: user.id,
+    try {
+      const payload = {
+        nome,
+        tipo,
+        icone: icone || null,
+        sistema: false,
+        id_usuario: user.id,
+      }
+
+      if (editingId) {
+        const { error } = await updateCategory(editingId, payload)
+        if (error) toast.error('Erro ao atualizar categoria.')
+        else toast.success('Categoria atualizada!')
+      } else {
+        const { error } = await addCategory(payload)
+        if (error) toast.error('Erro ao criar categoria.')
+        else toast.success('Categoria criada!')
+      }
+
+      setModalOpen(false)
+      resetForm()
+    } finally {
+      setSubmitting(false)
     }
-
-    if (editingId) {
-      const { error } = await updateCategory(editingId, payload)
-      if (error) toast.error('Erro ao atualizar categoria.')
-      else toast.success('Categoria atualizada!')
-    } else {
-      const { error } = await addCategory(payload)
-      if (error) toast.error('Erro ao criar categoria.')
-      else toast.success('Categoria criada!')
-    }
-
-    setModalOpen(false)
-    resetForm()
   }
 
   async function handleDelete(id: string) {
@@ -206,9 +214,10 @@ export default function Categories() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light"
+            disabled={submitting}
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {editingId ? 'Atualizar' : 'Criar'}
+            {submitting ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
           </button>
         </form>
       </Modal>
