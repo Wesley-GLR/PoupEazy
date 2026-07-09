@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { PluggyConnect } from "react-pluggy-connect";
 import { api } from "../lib/api";
 import { useTransactions } from "../hooks/useTransactions";
