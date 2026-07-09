@@ -65,11 +65,23 @@ export default function Budget() {
   // Filtra todos os orçamentos que pertencem ao período selecionado (mês ou personalizado).
   const selectedBudgets = useMemo(() => {
     return budgets.filter(b => {
-      const start = new Date(dataInicio + 'T00:00:00')
-      const end = new Date(dataFim + 'T00:00:00')
-      const startVal = start.getFullYear() * 12 + start.getMonth()
-      const endVal = end.getFullYear() * 12 + end.getMonth()
+      const startParts = dataInicio.split('-')
+      const endParts = dataFim.split('-')
+      
+      const startYear = parseInt(startParts[0], 10)
+      const startMonth = parseInt(startParts[1], 10)
+      
+      const endYear = parseInt(endParts[0], 10)
+      const endMonth = parseInt(endParts[1], 10)
+      
+      if (isNaN(startYear) || isNaN(startMonth) || isNaN(endYear) || isNaN(endMonth)) {
+        return false
+      }
+      
+      const startVal = startYear * 12 + (startMonth - 1)
+      const endVal = endYear * 12 + (endMonth - 1)
       const budgetVal = b.ano * 12 + (b.mes - 1)
+      
       return budgetVal >= startVal && budgetVal <= endVal
     })
   }, [budgets, dataInicio, dataFim])
@@ -106,8 +118,9 @@ export default function Budget() {
   }, [transactions, dataInicio, dataFim])
 
   function resetForm() {
-    const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
-    const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+    const startParts = dataInicio.split('-')
+    const defaultMes = modo === 'mes' ? mes : parseInt(startParts[1], 10)
+    const defaultAno = modo === 'mes' ? ano : parseInt(startParts[0], 10)
     setMesForm(defaultMes)
     setAnoForm(defaultAno)
     setValorPlanejado('')
@@ -117,18 +130,21 @@ export default function Budget() {
   // Mantém o formulário "Novo Orçamento" sincronizado com o período selecionado.
   useEffect(() => {
     if (!modalOpen) {
-      const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
-      const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+      const startParts = dataInicio.split('-')
+      const defaultMes = modo === 'mes' ? mes : parseInt(startParts[1], 10)
+      const defaultAno = modo === 'mes' ? ano : parseInt(startParts[0], 10)
       setMesForm(defaultMes)
       setAnoForm(defaultAno)
     }
   }, [mes, ano, dataInicio, modo, modalOpen])
 
   function openNew() {
-    const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
-    const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+    const startParts = dataInicio.split('-')
+    const defaultMes = modo === 'mes' ? mes : parseInt(startParts[1], 10)
+    const defaultAno = modo === 'mes' ? ano : parseInt(startParts[0], 10)
     setMesForm(defaultMes)
     setAnoForm(defaultAno)
+
     setValorPlanejado('')
     setEditingId(null)
     setModalOpen(true)
@@ -186,6 +202,11 @@ export default function Budget() {
       </div>
     )
   }
+
+  // Pre-calculate month and year of dataInicio safely
+  const startParts = dataInicio.split('-')
+  const startYear = parseInt(startParts[0], 10)
+  const startMonth = parseInt(startParts[1], 10)
 
   return (
     <div className="space-y-6">
@@ -276,10 +297,11 @@ export default function Budget() {
             onClick={openNew}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-light"
           >
-            <Plus size={18} /> Criar orçamento para {modo === 'mes' ? MONTH_NAMES[mes - 1] : `${MONTH_NAMES[new Date(dataInicio + 'T00:00:00').getMonth()]} de ${new Date(dataInicio + 'T00:00:00').getFullYear()}`}
+            <Plus size={18} /> Criar orçamento para {modo === 'mes' ? MONTH_NAMES[mes - 1] : `${MONTH_NAMES[startMonth - 1]} de ${startYear}`}
           </button>
         </div>
       )}
+
 
 
       {chartData.length > 0 && (

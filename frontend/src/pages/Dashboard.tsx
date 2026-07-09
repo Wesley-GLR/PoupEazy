@@ -19,14 +19,27 @@ export default function Dashboard() {
   // Filtra todos os orçamentos que pertencem ao período selecionado (mês ou personalizado).
   const selectedBudgets = useMemo(() => {
     return budgets.filter(b => {
-      const start = new Date(dataInicio + 'T00:00:00')
-      const end = new Date(dataFim + 'T00:00:00')
-      const startVal = start.getFullYear() * 12 + start.getMonth()
-      const endVal = end.getFullYear() * 12 + end.getMonth()
+      const startParts = dataInicio.split('-')
+      const endParts = dataFim.split('-')
+      
+      const startYear = parseInt(startParts[0], 10)
+      const startMonth = parseInt(startParts[1], 10)
+      
+      const endYear = parseInt(endParts[0], 10)
+      const endMonth = parseInt(endParts[1], 10)
+      
+      if (isNaN(startYear) || isNaN(startMonth) || isNaN(endYear) || isNaN(endMonth)) {
+        return false
+      }
+      
+      const startVal = startYear * 12 + (startMonth - 1)
+      const endVal = endYear * 12 + (endMonth - 1)
       const budgetVal = b.ano * 12 + (b.mes - 1)
+      
       return budgetVal >= startVal && budgetVal <= endVal
     })
   }, [budgets, dataInicio, dataFim])
+
 
   const totalOrcamento = selectedBudgets.reduce((sum, b) => sum + Number(b.valor_planejado), 0)
 
