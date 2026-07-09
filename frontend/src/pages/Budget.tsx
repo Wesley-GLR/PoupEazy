@@ -6,7 +6,7 @@ import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
 import ProgressBar from '../components/ui/ProgressBar'
 import BarChart from '../components/charts/BarChart'
-import { formatCurrency, isInPeriod, MONTH_NAMES } from '../lib/format'
+import { formatCurrency, formatDate, isInPeriod, isInDateRange, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -18,7 +18,7 @@ export default function Budget() {
   const { user } = useAuth()
   const { budgets, loading, addBudget, updateBudget } = useBudget()
   const { transactions } = useTransactions()
-  const { mes, ano } = usePeriod()
+  const { mes, ano, dataInicio, dataFim, modo, setMes, setAno, setModo } = usePeriod()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -30,7 +30,7 @@ export default function Budget() {
   // Guarda contra cliques duplos no formulário.
   const [submitting, setSubmitting] = useState(false)
 
-  // Soma de despesas e receitas confirmadas para um mês/ano específico.
+  // Soma de despesas e receitas confirmadas para um mês/ano específico (usado no histórico anual).
   function statsFor(m: number, a: number) {
     let gasto = 0
     let receitas = 0
@@ -62,9 +62,32 @@ export default function Budget() {
     [yearBudgets, transactions]
   )
 
-  const selectedBudget = budgets.find(b => b.mes === mes && b.ano === ano)
-  const selectedStats = useMemo(() => statsFor(mes, ano), [mes, ano, transactions])
-  const planejado = selectedBudget ? Number(selectedBudget.valor_planejado) : 0
+  // Filtra todos os orçamentos que pertencem ao período selecionado (mês ou personalizado).
+  const selectedBudgets = useMemo(() => {
+    return budgets.filter(b => {
+      const start = new Date(dataInicio + 'T00:00:00')
+      const end = new Date(dataFim + 'T00:00:00')
+      const startVal = start.getFullYear() * 12 + start.getMonth()
+      const endVal = end.getFullYear() * 12 + end.getMonth()
+      const budgetVal = b.ano * 12 + (b.mes - 1)
+      return budgetVal >= startVal && budgetVal <= endVal
+    })
+  }, [budgets, dataInicio, dataFim])
+
+  // Soma de despesas e receitas confirmadas para o intervalo de data ativo.
+  const selectedStats = useMemo(() => {
+    let gasto = 0
+    let receitas = 0
+    transactions.forEach(t => {
+      if (t.status !== 'confirmada') return
+      if (!isInDateRange(t.data_transacao, dataInicio, dataFim)) return
+      if (t.tipo === 'despesa') gasto += Number(t.valor)
+      else if (t.tipo === 'receita') receitas += Number(t.valor)
+    })
+    return { gasto, receitas, saldo: receitas - gasto }
+  }, [transactions, dataInicio, dataFim])
+
+  const planejado = selectedBudgets.reduce((sum, b) => sum + Number(b.valor_planejado), 0)
   const disponivel = planejado - selectedStats.gasto
   const consumoPct = planejado > 0 ? (selectedStats.gasto / planejado) * 100 : 0
 
@@ -72,7 +95,7 @@ export default function Budget() {
   const categoryBreakdown = useMemo(() => {
     const map = new Map<string, number>()
     transactions
-      .filter(t => t.status === 'confirmada' && t.tipo === 'despesa' && isInPeriod(t.data_transacao, mes, ano))
+      .filter(t => t.status === 'confirmada' && t.tipo === 'despesa' && isInDateRange(t.data_transacao, dataInicio, dataFim))
       .forEach(t => {
         const name = t.categoria?.nome ?? 'Outros'
         map.set(name, (map.get(name) ?? 0) + Number(t.valor))
@@ -80,11 +103,13 @@ export default function Budget() {
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [transactions, mes, ano])
+  }, [transactions, dataInicio, dataFim])
 
   function resetForm() {
-    setMesForm(mes)
-    setAnoForm(ano)
+    const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
+    const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+    setMesForm(defaultMes)
+    setAnoForm(defaultAno)
     setValorPlanejado('')
     setEditingId(null)
   }
@@ -92,14 +117,18 @@ export default function Budget() {
   // Mantém o formulário "Novo Orçamento" sincronizado com o período selecionado.
   useEffect(() => {
     if (!modalOpen) {
-      setMesForm(mes)
-      setAnoForm(ano)
+      const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
+      const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+      setMesForm(defaultMes)
+      setAnoForm(defaultAno)
     }
-  }, [mes, ano, modalOpen])
+  }, [mes, ano, dataInicio, modo, modalOpen])
 
   function openNew() {
-    setMesForm(mes)
-    setAnoForm(ano)
+    const defaultMes = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
+    const defaultAno = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+    setMesForm(defaultMes)
+    setAnoForm(defaultAno)
     setValorPlanejado('')
     setEditingId(null)
     setModalOpen(true)
@@ -132,8 +161,15 @@ export default function Budget() {
           ano: anoForm,
           valor_planejado: parseFloat(valorPlanejado),
         })
-        if (error) toast.error('Erro ao criar orçamento. Já existe um para este mês?')
-        else toast.success('Orçamento criado!')
+        if (error) {
+          toast.error('Erro ao criar orçamento. Já existe um para este mês?')
+        } else {
+          toast.success('Orçamento criado!')
+          // Muda o modo para "mes" e atualiza o mês/ano selecionado para exibir o orçamento recém-criado
+          setModo('mes')
+          setMes(mesForm)
+          setAno(anoForm)
+        }
       }
 
       setModalOpen(false)
@@ -156,7 +192,9 @@ export default function Budget() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-black">Orçamento</h1>
-          <p className="text-sm text-muted">{MONTH_NAMES[mes - 1]} de {ano}</p>
+          <p className="text-sm text-muted">
+            {modo === 'mes' ? `${MONTH_NAMES[mes - 1]} de ${ano}` : `De ${formatDate(dataInicio)} a ${formatDate(dataFim)}`}
+          </p>
         </div>
         <button
           onClick={openNew}
@@ -166,15 +204,17 @@ export default function Budget() {
         </button>
       </div>
 
-      {selectedBudget ? (
+      {selectedBudgets.length > 0 ? (
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#1E1E1E]">
-              {MONTH_NAMES[mes - 1]} {ano}
+              {modo === 'mes' ? `${MONTH_NAMES[mes - 1]} ${ano}` : 'Período Filtrado'}
             </h2>
-            <button onClick={() => openEdit(selectedBudget.id)} className="rounded p-1 text-muted hover:text-primary">
-              <Pencil size={16} />
-            </button>
+            {modo === 'mes' && selectedBudgets.length === 1 && (
+              <button onClick={() => openEdit(selectedBudgets[0].id)} className="rounded p-1 text-muted hover:text-primary">
+                <Pencil size={16} />
+              </button>
+            )}
           </div>
 
           <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -211,7 +251,9 @@ export default function Budget() {
 
           {categoryBreakdown.length > 0 && (
             <div className="mt-6">
-              <h3 className="mb-3 text-sm font-semibold text-muted">Despesas por categoria neste mês</h3>
+              <h3 className="mb-3 text-sm font-semibold text-muted">
+                {modo === 'mes' ? 'Despesas por categoria neste mês' : 'Despesas por categoria no período'}
+              </h3>
               <div className="space-y-2">
                 {categoryBreakdown.map(cat => (
                   <div key={cat.name} className="flex items-center justify-between text-sm">
@@ -226,16 +268,19 @@ export default function Budget() {
       ) : (
         <div className="rounded-lg border border-dashed border-border bg-surface-card p-8 text-center shadow-sm">
           <p className="mb-3 text-muted">
-            Nenhum orçamento definido para {MONTH_NAMES[mes - 1]} de {ano}.
+            {modo === 'mes'
+              ? `Nenhum orçamento definido para ${MONTH_NAMES[mes - 1]} de ${ano}.`
+              : `Nenhum orçamento definido para o período selecionado (${formatDate(dataInicio)} a ${formatDate(dataFim)}).`}
           </p>
           <button
             onClick={openNew}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-light"
           >
-            <Plus size={18} /> Criar orçamento para {MONTH_NAMES[mes - 1]}
+            <Plus size={18} /> Criar orçamento para {modo === 'mes' ? MONTH_NAMES[mes - 1] : `${MONTH_NAMES[new Date(dataInicio + 'T00:00:00').getMonth()]} de ${new Date(dataInicio + 'T00:00:00').getFullYear()}`}
           </button>
         </div>
       )}
+
 
       {chartData.length > 0 && (
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">

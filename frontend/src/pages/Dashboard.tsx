@@ -5,7 +5,7 @@ import { useBudget } from '../hooks/useBudget'
 import { usePeriod } from '../hooks/usePeriod'
 import Card from '../components/ui/Card'
 import PieChart from '../components/charts/PieChart'
-import { formatCurrency, formatDate, isInPeriod, MONTH_NAMES } from '../lib/format'
+import { formatCurrency, formatDate, isInDateRange, MONTH_NAMES } from '../lib/format'
 import { TrendingDown, TrendingUp, Wallet, Target } from 'lucide-react'
 
 // Painel consolidado do período selecionado:
@@ -14,14 +14,17 @@ export default function Dashboard() {
   const { profile } = useAuth()
   const { transactions, loading: txLoading } = useTransactions()
   const { budgets, loading: budgetLoading } = useBudget()
-  const { mes, ano } = usePeriod()
+  const { mes, ano, dataInicio, dataFim, modo } = usePeriod()
 
-  const currentBudget = budgets.find(b => b.mes === mes && b.ano === ano)
+  // No modo personalizado, busca o orçamento do mês inicial do período selecionado
+  const budgetMonth = modo === 'mes' ? mes : new Date(dataInicio + 'T00:00:00').getMonth() + 1
+  const budgetYear = modo === 'mes' ? ano : new Date(dataInicio + 'T00:00:00').getFullYear()
+  const currentBudget = budgets.find(b => b.mes === budgetMonth && b.ano === budgetYear)
 
   // Recorte do período selecionado para a movimentação confirmada (base para cards e gráficos).
   const monthTx = useMemo(() =>
-    transactions.filter(t => t.status === 'confirmada' && isInPeriod(t.data_transacao, mes, ano)),
-    [transactions, mes, ano]
+    transactions.filter(t => t.status === 'confirmada' && isInDateRange(t.data_transacao, dataInicio, dataFim)),
+    [transactions, dataInicio, dataFim]
   )
 
   const totalReceitas = monthTx.filter(t => t.tipo === 'receita').reduce((s, t) => s + Number(t.valor), 0)
@@ -43,9 +46,9 @@ export default function Dashboard() {
   // Transações recentes do período selecionado.
   const recentTx = useMemo(() =>
     transactions
-      .filter(t => isInPeriod(t.data_transacao, mes, ano))
+      .filter(t => isInDateRange(t.data_transacao, dataInicio, dataFim))
       .slice(0, 5),
-    [transactions, mes, ano]
+    [transactions, dataInicio, dataFim]
   )
   const loading = txLoading || budgetLoading
 
@@ -64,7 +67,9 @@ export default function Dashboard() {
         <p className="text-lg font-semibold text-muted">
           Bem-vindo de volta{profile?.nome ? `, ${profile.nome}` : ''}.
         </p>
-        <p className="text-sm text-muted">{MONTH_NAMES[mes - 1]} de {ano}</p>
+        <p className="text-sm text-muted">
+          {modo === 'mes' ? `${MONTH_NAMES[mes - 1]} de ${ano}` : `De ${formatDate(dataInicio)} a ${formatDate(dataFim)}`}
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
 import PieChart from '../components/charts/PieChart'
-import { isInPeriod, MONTH_NAMES } from '../lib/format'
+import { isInDateRange, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -20,7 +20,7 @@ export default function Categories() {
   const { user } = useAuth()
   const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories()
   const { transactions } = useTransactions()
-  const { mes, ano } = usePeriod()
+  const { mes, ano, dataInicio, dataFim, modo } = usePeriod()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -35,7 +35,7 @@ export default function Categories() {
   const chartData = useMemo(() => {
     const map = new Map<string, number>()
     transactions
-      .filter(t => t.tipo === 'despesa' && t.status === 'confirmada' && isInPeriod(t.data_transacao, mes, ano))
+      .filter(t => t.tipo === 'despesa' && t.status === 'confirmada' && isInDateRange(t.data_transacao, dataInicio, dataFim))
       .forEach(t => {
         const name = t.categoria?.nome ?? 'Outros'
         map.set(name, (map.get(name) ?? 0) + Number(t.valor))
@@ -43,7 +43,7 @@ export default function Categories() {
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [transactions, mes, ano])
+  }, [transactions, dataInicio, dataFim])
 
   function resetForm() {
     setNome('')
@@ -135,7 +135,9 @@ export default function Categories() {
         <div className="rounded-lg border border-border bg-surface-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#1E1E1E]">Despesas por Categoria</h2>
-            <span className="text-xs font-medium text-muted">{MONTH_NAMES[mes - 1]}/{ano}</span>
+            <span className="text-xs font-medium text-muted">
+              {modo === 'mes' ? `${MONTH_NAMES[mes - 1]}/${ano}` : 'Filtrado'}
+            </span>
           </div>
           {chartData.length > 0 ? (
             <PieChart data={chartData} />

@@ -29,6 +29,24 @@ export function isInPeriod(dateStr: string, mes: number, ano: number): boolean {
   return d.getMonth() + 1 === mes && d.getFullYear() === ano
 }
 
+// Verifica se uma data (YYYY-MM-DD) está dentro do intervalo [dataInicio, dataFim].
+// Ambos os limites são inclusivos.
+export function isInDateRange(dateStr: string, dataInicio: string, dataFim: string): boolean {
+  const d = dateStr.slice(0, 10)
+  return d >= dataInicio && d <= dataFim
+}
+
+// Gera a string YYYY-MM-DD do primeiro dia de um mês/ano.
+export function firstDayOfMonth(mes: number, ano: number): string {
+  return `${ano}-${String(mes).padStart(2, '0')}-01`
+}
+
+// Gera a string YYYY-MM-DD do último dia de um mês/ano.
+export function lastDayOfMonth(mes: number, ano: number): string {
+  const last = new Date(ano, mes, 0).getDate()
+  return `${ano}-${String(mes).padStart(2, '0')}-${String(last).padStart(2, '0')}`
+}
+
 // Fonte única de nomes de meses usada em seleção e gráficos.
 export const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

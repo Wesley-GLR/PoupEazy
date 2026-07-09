@@ -5,7 +5,7 @@ import { useBudget } from '../hooks/useBudget'
 import { useAuth } from '../hooks/useAuth'
 import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
-import { formatCurrency, formatDate, isInPeriod, MONTH_NAMES } from '../lib/format'
+import { formatCurrency, formatDate, isInDateRange, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil, Trash2, Search, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -16,7 +16,7 @@ export default function Transactions() {
   const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } = useTransactions()
   const { categories } = useCategories()
   const { getOrCreateBudget } = useBudget()
-  const { mes, ano } = usePeriod()
+  const { mes, ano, dataInicio, dataFim, modo } = usePeriod()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -36,12 +36,12 @@ export default function Transactions() {
   // Filtro local: período global (opcional) + busca textual + tipo, sem nova consulta ao banco.
   const filteredTx = useMemo(() =>
     transactions.filter(tx => {
-      const matchPeriod = !onlyPeriod || isInPeriod(tx.data_transacao, mes, ano)
+      const matchPeriod = !onlyPeriod || isInDateRange(tx.data_transacao, dataInicio, dataFim)
       const matchSearch = tx.descricao.toLowerCase().includes(search.toLowerCase())
       const matchType = filterType === 'todos' || tx.tipo === filterType
       return matchPeriod && matchSearch && matchType
     }),
-    [transactions, search, filterType, onlyPeriod, mes, ano]
+    [transactions, search, filterType, onlyPeriod, dataInicio, dataFim]
   )
 
   // Regras de categoria por tipo de lançamento:
@@ -178,7 +178,7 @@ export default function Transactions() {
             onClick={() => setOnlyPeriod(true)}
             className={`px-3 py-2 text-sm font-medium transition ${onlyPeriod ? 'bg-primary text-white' : 'bg-white text-muted hover:bg-surface'}`}
           >
-            {MONTH_NAMES[mes - 1]}/{ano}
+            {modo === 'mes' ? `${MONTH_NAMES[mes - 1]}/${ano}` : 'Filtrado'}
           </button>
           <button
             type="button"
