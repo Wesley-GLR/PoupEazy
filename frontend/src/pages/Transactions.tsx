@@ -5,6 +5,7 @@ import { useBudget } from '../hooks/useBudget'
 import { useAuth } from '../hooks/useAuth'
 import { usePeriod } from '../hooks/usePeriod'
 import Modal from '../components/ui/Modal'
+import WhatsAppLink from '../components/WhatsAppLink'
 import { formatCurrency, formatDate, isInDateRange, MONTH_NAMES } from '../lib/format'
 import { Plus, Pencil, Trash2, Search, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -18,6 +19,7 @@ export default function Transactions() {
   const { getOrCreateBudget } = useBudget()
   const { mes, ano, dataInicio, dataFim, modo } = usePeriod()
   const [modalOpen, setModalOpen] = useState(false)
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'todos' | 'despesa' | 'receita'>('todos')
@@ -102,7 +104,6 @@ export default function Transactions() {
         id_categoria: categoriaId,
         id_orcamento: budget.id,
         data_transacao: dataTransacao,
-        origem: 'manual' as const,
         status: 'confirmada' as const,
         id_metas: null,
         nlp_metadata: null,
@@ -113,7 +114,7 @@ export default function Transactions() {
         if (error) toast.error('Erro ao atualizar transação.')
         else toast.success('Transação atualizada!')
       } else {
-        const { error } = await addTransaction(payload)
+        const { error } = await addTransaction({ ...payload, origem: 'manual' })
         if (error) toast.error('Erro ao criar transação.')
         else toast.success('Transação criada!')
       }
@@ -212,7 +213,10 @@ export default function Transactions() {
               filteredTx.map(tx => (
                 <tr key={tx.id} className="border-b border-border/50 transition hover:bg-surface/50">
                   <td className="px-4 py-3 text-muted">{formatDate(tx.data_transacao)}</td>
-                  <td className="px-4 py-3 font-medium text-[#1E1E1E]">{tx.descricao}</td>
+                  <td className="px-4 py-3 font-medium text-[#1E1E1E]">
+                    {tx.descricao}
+                    {tx.origem === 'chatbot' && <span className="ml-2 inline-block rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-800">WhatsApp</span>}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       tx.tipo === 'receita'
@@ -242,14 +246,14 @@ export default function Transactions() {
         </table>
       </div>
 
-      <a
-        href="https://wa.me/"
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        type="button"
+        onClick={() => setWhatsAppOpen(true)}
         className="fixed bottom-6 right-6 flex items-center gap-2 rounded-lg bg-whatsapp px-4 py-2.5 text-sm font-medium text-white shadow-lg transition hover:opacity-90"
       >
         <MessageCircle size={18} /> Registrar via WhatsApp
-      </a>
+      </button>
+      {whatsAppOpen && <WhatsAppLink onClose={() => setWhatsAppOpen(false)} />}
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); resetForm() }} title={editingId ? 'Editar Transação' : 'Nova Transação'}>
         <form onSubmit={handleSubmit} className="space-y-4">
