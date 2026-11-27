@@ -13,7 +13,7 @@ export default function AppLayout() {
   const location = useLocation()
 
   // Perfil, Metas e Integrações não dependem do período financeiro selecionado.
-  const showPeriod = !['/metas', '/integracoes', '/perfil'].includes(location.pathname)
+  const showPeriod = !['/metas', '/integracoes', '/perfil', '/relatorios'].includes(location.pathname)
 
   return (
     <PeriodProvider>

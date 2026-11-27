@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign, Landmark, UserRound } from 'lucide-react'
+import { Home, RefreshCw, Grid3X3, ArrowUpRight, LogOut, Menu, X, DollarSign, Landmark, UserRound, FileText } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import logoHorizontal from '../../assets/logo-horizontal.png'
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/metas', label: 'Metas', icon: ArrowUpRight },
   { to: '/orcamento', label: 'Orçamento', icon: DollarSign },
   { to: '/integracoes', label: 'Open Finance', icon: Landmark },
+  { to: '/relatorios', label: 'Relatórios', icon: FileText },
   { to: '/perfil', label: 'Perfil', icon: UserRound },
 ]
 
