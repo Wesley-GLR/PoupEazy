@@ -16,7 +16,18 @@ O PoupEazy ajuda usuários a controlar gastos, definir metas financeiras e acomp
 - **Orçamentos Mensais** — Planejamento de gastos por mês com comparativo planejado vs real; gráfico de barras anual
 - **Notificações** — Tabela preparada para alertas de limite excedido, metas próximas e dicas financeiras (RF07)
 - **Open Finance** — Estrutura de banco pronta para integração futura com bancos via OAuth 2.0 (RF04)
-- **ChatBot WhatsApp** — Campo `origem` nas transações preparado para registro via chatbot (RF02)
+- **Chatbot WhatsApp** — Vínculo da conta, registro de despesas com confirmação e consulta de relatórios pelo WhatsApp (RF02)
+
+---
+
+## Registrar via WhatsApp
+
+1. Na demonstração com Vonage, inscreva seu número pelo link de adesão do Sandbox enviado pela equipe.
+2. Entre na sua conta PoupEazy e abra **Transações → Registrar via WhatsApp → Gerar link de vínculo**. Abra o WhatsApp e envie a mensagem preenchida. Volte ao PoupEazy e selecione **Já enviei a mensagem**.
+3. Envie `cabelo 35` no WhatsApp e responda `sim` para confirmar. Atualize **Transações** para ver o lançamento identificado como **WhatsApp**.
+4. Envie `relatório diário`, `relatório semanal`, `relatório mensal` ou `relatório total` para consultar sua conta. O bot pode enviar um gráfico em PNG quando o backend está configurado com Vonage e mídia HTTPS.
+
+O vínculo é compartilhado entre o site e o aplicativo para a mesma conta. O recurso depende da API estar configurada e habilitada. Consulte o [guia de configuração do backend](https://github.com/Wesley-GLR/PoupEazy_BackEnd/blob/main/WHATSAPP_DEMO.md).
 
 ---
 
@@ -171,7 +182,7 @@ PoupEazy/
 | Código | Descrição                             | Status           |
 | ------ | ------------------------------------- | ---------------- |
 | RF01   | Gerenciar usuários                    | Implementado     |
-| RF02   | ChatBot WhatsApp                      | Estrutura pronta |
+| RF02   | Chatbot WhatsApp                       | Implementado · requer configuração no backend |
 | RF03   | Metas e gastos                        | Implementado     |
 | RF04   | Integração Open Finance               | Estrutura pronta |
 | RF05   | Categorização automática              | Parcial          |
