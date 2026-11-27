@@ -80,8 +80,7 @@ export default function App() {
           <Route path="/esqueci-senha" element={<ForgotPassword />} />
         </Route>
 
-        {/* Redefinição de senha: usa AuthLayout mas fica fora do PublicRoute,
-            pois o link de recuperação do Supabase cria uma sessão temporária. */}
+        {/* O link de recuperação funciona com ou sem sessão no navegador. */}
         <Route element={<AuthLayout />}>
           <Route path="/redefinir-senha" element={<ResetPassword />} />
         </Route>

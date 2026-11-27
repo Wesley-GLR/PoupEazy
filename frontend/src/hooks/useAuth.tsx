@@ -101,8 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(updated)
   }
 
-  // Solicita recuperacao de senha. Em desenvolvimento o backend retorna o resetToken
-  // no corpo da resposta (para testar via Postman, sem servidor de e-mail).
+  // Solicita o link de recuperacao por e-mail, com resposta generica da API.
   async function resetPassword(email: string) {
     try {
       await api.post('/auth/forgot-password', { email }, { auth: false })
@@ -116,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function updatePassword(newPassword: string) {
     try {
       await api.patch('/auth/password', { novaSenha: newPassword })
+      await signOut()
       return { error: null }
     } catch (err) {
       return { error: err as Error }

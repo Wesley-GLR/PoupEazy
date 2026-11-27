@@ -1,62 +1,84 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api } from '../lib/api'
-import toast from 'react-hot-toast'
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { api, ApiError } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
+import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 // Tela de redefinicao de senha.
 // O link de recuperacao traz o token na query string (?token=...).
-// Em desenvolvimento, pegue o resetToken retornado por POST /auth/forgot-password
-// (via Postman) e acesse /redefinir-senha?token=SEU_TOKEN.
+// O token vem somente pelo e-mail e e validado/consumido pela API.
 export default function ResetPassword() {
-  const navigate = useNavigate()
+  const { signOut } = useAuth()
   const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const token = searchParams.get('token') || ''
 
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmar, setConfirmar] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [canReset, setCanReset] = useState(false)
-  const [checking, setChecking] = useState(true)
-
-  useEffect(() => {
-    // Sem token na URL nao ha como redefinir.
-    setCanReset(Boolean(token))
-    setChecking(false)
-  }, [token])
+  const [invalidToken, setInvalidToken] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+  const canReset = /^[a-f0-9]{64}$/.test(token) && !invalidToken
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (loading) return
+    setError('')
 
     if (novaSenha !== confirmar) {
-      toast.error('As senhas não coincidem.')
+      setError('As senhas não coincidem.')
       return
     }
 
     if (novaSenha.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres.')
+      setError('A senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+
+    if (new TextEncoder().encode(novaSenha).length > 72) {
+      setError('A senha é muito longa. Use uma senha menor.')
       return
     }
 
     setLoading(true)
     try {
       await api.post('/auth/reset-password', { token, novaSenha }, { auth: false })
-      toast.success('Senha atualizada! Faça login com a nova senha.')
-      navigate('/login', { replace: true })
+      await signOut()
+      setNovaSenha('')
+      setConfirmar('')
+      setDone(true)
+      // Remove o segredo do historico/URL assim que ele for consumido.
+      window.history.replaceState(window.history.state, '', window.location.pathname)
     } catch (err) {
-      toast.error((err as Error).message || 'Não foi possível atualizar a senha.')
+      if (err instanceof ApiError && err.code === 'RESET_TOKEN_INVALID') {
+        setInvalidToken(true)
+        setNovaSenha('')
+        setConfirmar('')
+      } else if (err instanceof ApiError && err.status === 429) {
+        setError('Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.')
+      } else if (err instanceof ApiError && err.status === 422) {
+        setError(err.message)
+      } else {
+        setError('Não foi possível atualizar a senha. Tente novamente em instantes.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  if (checking) {
+  if (done) {
     return (
-      <div className="rounded-xl bg-surface-form p-8 shadow-lg">
-        <div className="flex items-center justify-center py-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
+      <div className="rounded-xl bg-surface-form p-8 text-center shadow-lg" role="status">
+        <CheckCircle2 size={40} className="mx-auto mb-4 text-primary" aria-hidden="true" />
+        <h2 className="text-3xl font-bold text-primary">Senha atualizada</h2>
+        <p className="mt-4 text-sm leading-relaxed text-muted">
+          Você já pode voltar ao aplicativo e entrar com a nova senha.
+          Para continuar pelo navegador, acesse o login abaixo.
+        </p>
+        <Link to="/login" replace className="mt-6 block rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-light">
+          Ir para o login
+        </Link>
       </div>
     )
   }
@@ -98,21 +120,27 @@ export default function ResetPassword() {
         Defina uma nova senha para acessar sua conta.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-muted">Nova senha</label>
+          <label htmlFor="new-password" className="mb-1 block text-xs font-semibold text-muted">Nova senha</label>
           <div className="relative">
             <input
+              id="new-password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               value={novaSenha}
               onChange={e => setNovaSenha(e.target.value)}
               required
               minLength={6}
+              maxLength={72}
+              disabled={loading}
               className="w-full rounded-2xl bg-[#D4D4D4] px-4 py-2.5 pr-10 text-sm outline-none focus:ring-2 focus:ring-primary"
               placeholder="••••••••"
             />
             <button
               type="button"
+              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
             >
@@ -122,18 +150,23 @@ export default function ResetPassword() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold text-muted">Confirmar nova senha</label>
+          <label htmlFor="confirm-new-password" className="mb-1 block text-xs font-semibold text-muted">Confirmar nova senha</label>
           <input
+            id="confirm-new-password"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             value={confirmar}
             onChange={e => setConfirmar(e.target.value)}
             required
             minLength={6}
+            maxLength={72}
+            disabled={loading}
             className="w-full rounded-2xl bg-[#D4D4D4] px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
             placeholder="••••••••"
           />
         </div>
 
+        {error && <p role="alert" className="rounded-xl bg-danger/10 px-4 py-3 text-sm text-red-800">{error}</p>}
         <button
           type="submit"
           disabled={loading}

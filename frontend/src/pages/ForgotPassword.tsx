@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { ApiError } from '../lib/api'
 import toast from 'react-hot-toast'
 import { ArrowLeft, MailCheck } from 'lucide-react'
 
 // Tela pública para o usuário solicitar um e-mail com link de recuperação de senha.
-// O envio é feito pelo Supabase Auth, que entrega o link já com tokens de acesso.
+// A API própria gera o link e solicita o envio pela Gmail API.
 export default function ForgotPassword() {
   const { resetPassword } = useAuth()
   const [email, setEmail] = useState('')
@@ -19,24 +20,13 @@ export default function ForgotPassword() {
     const { error } = await resetPassword(email)
 
     if (error) {
-      // Mantemos o erro original no console para facilitar diagnóstico em desenvolvimento.
-      console.error('[ForgotPassword] resetPasswordForEmail falhou:', error)
-
-      // Mapeia mensagens conhecidas do Supabase Auth para um texto mais útil em PT-BR.
-      const msg = error.message?.toLowerCase() ?? ''
-      let friendly = 'Não foi possível enviar o e-mail. Tente novamente em instantes.'
-
-      if (msg.includes('rate') || msg.includes('too many') || msg.includes('limit')) {
+      let friendly = 'Não foi possível solicitar a recuperação. Tente novamente em instantes.'
+      if (error instanceof ApiError && error.status === 429) {
         friendly = 'Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.'
-      } else if (msg.includes('redirect') || msg.includes('not allowed') || msg.includes('invalid url')) {
-        friendly =
-          'URL de redirecionamento não autorizada. Adicione a URL atual em Authentication → URL Configuration no Supabase.'
-      } else if (msg.includes('smtp') || msg.includes('email service') || msg.includes('email provider')) {
-        friendly = 'Serviço de e-mail do Supabase indisponível. Verifique o SMTP do projeto.'
-      } else if (msg.includes('invalid') && msg.includes('email')) {
-        friendly = 'E-mail inválido. Confira o endereço digitado.'
-      } else if (error.message) {
-        friendly = error.message
+      } else if (error instanceof ApiError && error.status === 503) {
+        friendly = 'A recuperação por e-mail está indisponível no momento. Tente novamente mais tarde.'
+      } else if (error instanceof ApiError && error.status === 400) {
+        friendly = 'Confira se o endereço de e-mail foi digitado corretamente.'
       }
 
       toast.error(friendly)
@@ -62,8 +52,8 @@ export default function ForgotPassword() {
             <MailCheck size={28} />
           </div>
           <p className="text-sm text-muted">
-            Verifique a caixa de entrada de <span className="font-semibold">{email}</span>.
-            Não esqueça de olhar também a pasta de spam.
+            Se <span className="font-semibold">{email}</span> estiver cadastrado, você receberá as instruções.
+            Confira a caixa de entrada e a pasta de spam. Aguarde pelo menos um minuto antes de solicitar outro link.
           </p>
           <button
             type="button"
@@ -79,12 +69,15 @@ export default function ForgotPassword() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-muted">E-mail</label>
+            <label htmlFor="recovery-email" className="mb-1 block text-xs font-semibold text-muted">E-mail</label>
             <input
+              id="recovery-email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
+              maxLength={254}
               className="w-full rounded-2xl bg-[#D4D4D4] px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
               placeholder="seu@email.com"
             />

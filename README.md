@@ -113,6 +113,17 @@ O projeto está hospedado e disponível publicamente:
 | `/esqueci-senha`    | Formulário que dispara o token de reset via API        |
 | `/redefinir-senha`  | Página para definir a nova senha com o token           |
 
+O envio usa a Gmail API no backend. Configure `EMAIL_ENABLED`, as credenciais
+OAuth e `PASSWORD_RESET_URL` na API, conforme o README do backend. A URL de
+recuperação deve apontar para o mesmo ambiente de API utilizado pelo site:
+por exemplo, no teste local, API em `http://localhost:3001/api` e página em
+`http://localhost:5173/redefinir-senha`.
+
+O link recebido por e-mail funciona no navegador, inclusive para solicitações
+feitas pelo aplicativo. Ao concluir, a tela orienta voltar ao app e entrar com a
+nova senha. Links inválidos/expirados/usados oferecem uma nova solicitação. Os
+tokens não são retornados pela API nem utilizados para login automático.
+
 ### Exclusão de conta
 
 A rota pública `/excluir-conta` funciona com ou sem sessão e sem precisar instalar

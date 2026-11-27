@@ -20,10 +20,12 @@ export function clearToken() {
 // Erro padronizado da API, com o status HTTP e a mensagem vinda do backend.
 export class ApiError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  code?: string
+  constructor(message: string, status: number, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -61,7 +63,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     const message = (data && (data.error || data.message)) || `Erro ${res.status}`
-    throw new ApiError(message, res.status)
+    throw new ApiError(message, res.status, typeof data?.code === 'string' ? data.code : undefined)
   }
 
   return data as T
