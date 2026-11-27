@@ -137,6 +137,22 @@ solicitação/atendimento. Dados em serviços externos e cópias de segurança n
 apagados automaticamente por esse formulário. O link também aparece no rodapé
 da página inicial e no Perfil do aplicativo mobile.
 
+### Confirmação de cadastro por e-mail
+
+Novos cadastros precisam confirmar o e-mail antes do primeiro login. A tela de
+cadastro orienta abrir o link recebido e oferece reenvio com intervalo de um
+minuto. O link abre a rota pública `/confirmar-email`, disponível com ou sem
+sessão, e a confirmação acontece ao clicar no botão da página.
+
+Após confirmar, o usuário entra com e-mail e senha no site ou volta ao aplicativo.
+Links vencidos ou já usados oferecem reenvio. O cadastro e a confirmação não
+autenticam automaticamente.
+
+A API deve ter a migration `007_email_verification.sql` aplicada e a variável
+`EMAIL_VERIFICATION_URL` apontando para a página deste ambiente. As contas
+anteriores à migration mantêm acesso sem confirmação obrigatória. Consulte o
+README do backend para a ordem de atualização do banco e dos serviços.
+
 ---
 
 ## Estrutura do Projeto

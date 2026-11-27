@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
+import EmailVerificationNotice from '../components/auth/EmailVerificationNotice'
 
 // Tela de cadastro com validações mínimas antes de criar conta no Auth.
 export default function Register() {
   const { signUp } = useAuth()
-  const navigate = useNavigate()
+  const [created, setCreated] = useState(false)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [telefone, setTelefone] = useState('')
@@ -18,6 +19,7 @@ export default function Register() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (loading) return
 
     // Validação local para evitar roundtrip desnecessário quando as senhas divergem.
     if (senha !== confirmarSenha) {
@@ -36,10 +38,23 @@ export default function Register() {
     if (error) {
       toast.error(error.message || 'Erro ao criar conta.')
     } else {
-      toast.success('Conta criada com sucesso!')
-      navigate('/login')
+      setSenha('')
+      setConfirmarSenha('')
+      setCreated(true)
     }
     setLoading(false)
+  }
+
+  if (created) {
+    return (
+      <div className="rounded-xl bg-surface-form p-8 shadow-lg">
+        <h1 className="text-center text-3xl font-bold text-primary">Confirme seu e-mail</h1>
+        <p className="my-4 text-sm leading-relaxed text-muted">Sua conta foi criada. Confirme o endereço de e-mail para fazer o primeiro login.</p>
+        <EmailVerificationNotice initialEmail={email} initialWait />
+        <Link to="/login" className="mt-5 block text-center text-sm font-semibold text-primary hover:underline">Ir para o login</Link>
+        <button type="button" onClick={() => setCreated(false)} className="mt-3 w-full text-center text-xs text-muted hover:underline">Usar outro e-mail no cadastro</button>
+      </div>
+    )
   }
 
   return (

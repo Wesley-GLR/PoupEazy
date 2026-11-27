@@ -7,12 +7,19 @@ export interface AuthUser {
   id: string
   email: string
   criado_em?: string
+  email_verificado?: boolean
+  email_verificacao_obrigatoria?: boolean
 }
 
 interface AuthResponse {
   token: string
   user: AuthUser
   profile: Profile | null
+}
+
+interface RegistrationResponse {
+  message: string
+  emailVerificationRequired: boolean
 }
 
 // Contexto global de autenticacao:
@@ -72,11 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Cadastro: cria a conta no backend. Nao autentica automaticamente
-  // (a tela de cadastro redireciona para o login, mantendo o fluxo original).
+  // Cadastro cria a conta pendente e solicita confirmacao por e-mail, sem sessao.
   async function signUp(email: string, password: string, nome: string, telefone?: string) {
     try {
-      await api.post<AuthResponse>(
+      await api.post<RegistrationResponse>(
         '/auth/register',
         { email, password, nome, telefone: telefone || null },
         { auth: false }

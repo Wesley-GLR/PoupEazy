@@ -3,22 +3,32 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
+import { ApiError } from '../lib/api'
+import EmailVerificationNotice from '../components/auth/EmailVerificationNotice'
 
-// Tela de login por e-mail/senha integrada ao Supabase Auth.
+// Login por e-mail/senha usando a API propria.
 export default function Login() {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
+    setPendingEmail('')
 
     const { error } = await signIn(email, senha)
     if (error) {
-      toast.error('E-mail ou senha incorretos.')
+      if (error instanceof ApiError && error.code === 'EMAIL_NOT_VERIFIED') {
+        setSenha('')
+        setPendingEmail(email.trim())
+      } else {
+        toast.error('E-mail ou senha incorretos.')
+      }
     }
     setLoading(false)
   }
@@ -80,6 +90,10 @@ export default function Login() {
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
+
+      {pendingEmail && <div className="mt-5"><h3 className="mb-3 text-sm font-bold text-primary">Confirme seu e-mail antes de entrar</h3><EmailVerificationNotice key={pendingEmail} initialEmail={pendingEmail} /></div>}
+
+      <Link to="/confirmar-email" className="mt-4 block text-center text-xs font-semibold text-primary hover:underline">Reenviar confirmação de e-mail</Link>
 
       <p className="mt-4 text-center text-xs text-muted">
         Não tem conta?{' '}

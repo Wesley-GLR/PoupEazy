@@ -14,6 +14,7 @@ import Goals from './pages/Goals'
 import Budget from './pages/Budget'
 import Integrations from './pages/Integrations'
 import DeleteAccount from './pages/DeleteAccount'
+import ConfirmEmail from './pages/ConfirmEmail'
 
 // Guardião de rotas privadas:
 // só libera a renderização quando o estado de autenticação já foi resolvido.
@@ -83,6 +84,7 @@ export default function App() {
         {/* O link de recuperação funciona com ou sem sessão no navegador. */}
         <Route element={<AuthLayout />}>
           <Route path="/redefinir-senha" element={<ResetPassword />} />
+          <Route path="/confirmar-email" element={<ConfirmEmail />} />
         </Route>
 
         {/* Rotas principais do produto (exigem sessão ativa). */}
