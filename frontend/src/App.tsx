@@ -17,6 +17,7 @@ import DeleteAccount from './pages/DeleteAccount'
 import ConfirmEmail from './pages/ConfirmEmail'
 import Profile from './pages/Profile'
 import Reports from './pages/Reports'
+import Privacy from './pages/Privacy'
 
 // Guardião de rotas privadas:
 // só libera a renderização quando o estado de autenticação já foi resolvido.
@@ -75,6 +76,7 @@ export default function App() {
       <Routes>
         {/* Disponível com ou sem sessão, inclusive fora do aplicativo móvel. */}
         <Route path="/excluir-conta" element={<DeleteAccount />} />
+        <Route path="/privacidade" element={<Privacy />} />
 
         {/* Rotas de autenticação (acessíveis apenas sem sessão ativa). */}
         <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>

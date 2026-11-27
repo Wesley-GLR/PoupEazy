@@ -164,6 +164,8 @@ export default function Profile() {
 
       <EmailPreferences />
 
+      <p className="text-sm leading-relaxed text-muted">Consulte como tratamos suas informações na <Link to="/privacidade" className="font-semibold text-primary underline underline-offset-4">Política de Privacidade</Link>.</p>
+
       <section className="flex flex-col items-start gap-5 rounded-lg border border-border bg-surface-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between" aria-labelledby="delete-account-title">
         <div className="flex items-start gap-3">
           <Trash2 size={20} className="mt-1 shrink-0 text-danger" aria-hidden="true" />

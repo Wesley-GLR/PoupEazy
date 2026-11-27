@@ -94,6 +94,7 @@ export default function DeleteAccount() {
                 Mensagens já recebidas por e-mail ou WhatsApp e dados mantidos por serviços externos
                 não são apagados por este formulário. Cópias de segurança dos provedores seguem os
                 controles de retenção desses serviços. Para dúvidas sobre esses dados, fale com a equipe.
+                {' '}Consulte também nossa <Link to="/privacidade" className="font-semibold text-primary underline underline-offset-4">Política de Privacidade</Link>.
               </p>
             </section>
 

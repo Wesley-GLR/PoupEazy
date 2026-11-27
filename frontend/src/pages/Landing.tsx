@@ -65,7 +65,8 @@ export default function Landing() {
         <div className="rounded-2xl bg-[#F8FAFC] p-10 text-center">
           <h3 className="text-2xl font-extrabold text-primary md:text-3xl">Mas é seguro?</h3>
           <p className="mt-4 text-base font-medium leading-relaxed text-black">
-            Sim! Nós não salvamos nenhum dado confidencial e não termos acesso a sua conta bancária.
+            Utilizamos autenticação e controles de acesso para proteger seus dados. O PoupEazy organiza informações financeiras e não movimenta dinheiro. Saiba mais na nossa{' '}
+            <Link to="/privacidade" className="font-semibold text-primary underline underline-offset-4">Política de Privacidade</Link>.
           </p>
         </div>
       </section>
@@ -80,6 +81,9 @@ export default function Landing() {
           <div className="text-sm text-muted">
             <p className="font-extrabold">Contato</p>
             <a href="mailto:poupeazy@gmail.com" className="hover:underline">poupeazy@gmail.com</a>
+            <p className="mt-3">
+              <Link to="/privacidade" className="font-semibold text-primary hover:underline">Política de Privacidade</Link>
+            </p>
             <p className="mt-3">
               <Link to="/excluir-conta" className="font-semibold text-primary hover:underline">Excluir conta e dados</Link>
             </p>

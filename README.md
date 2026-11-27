@@ -137,6 +137,30 @@ solicitação/atendimento. Dados em serviços externos e cópias de segurança n
 apagados automaticamente por esse formulário. O link também aparece no rodapé
 da página inicial e no Perfil do aplicativo mobile.
 
+### Política de Privacidade
+
+A rota pública `/privacidade` identifica a Equipe do projeto acadêmico PoupEazy e
+o contato `poupeazy@gmail.com`. Ela descreve os dados utilizados no site/app,
+e-mails, relatórios e integrações opcionais, além da retenção e dos limites da
+exclusão. O projeto organiza informações financeiras e não movimenta dinheiro;
+isso não torna os dados de cadastro, registros ou mensagens automaticamente fictícios.
+
+O acesso está disponível na página inicial, nas telas de autenticação, no Perfil
+e na página de exclusão. A rota não exige sessão nem resposta da API. Publique o
+site antes de distribuir o app com o link
+`https://poup-eazy.vercel.app/privacidade`. Esta alteração não exige migração SQL
+nem novas variáveis de ambiente.
+
+Antes das declarações finais no Google Play, a equipe deve conferir os períodos
+efetivos de retenção de logs/backups nos provedores, o provedor ativo do WhatsApp
+e o procedimento para atender exclusões também nos serviços externos que tratam
+dados em nome do projeto. A exclusão atual remove a base ativa local, mas não
+revoga a conexão remota da Pluggy nem apaga cópias de mensagens. A política
+informa esses limites; o texto, por si só, não implementa exclusão nos terceiros.
+Consulte os [requisitos oficiais de exclusão de conta](https://support.google.com/googleplay/android-developer/answer/13327111?hl=pt-BR)
+antes de declarar esse processo concluído no Console. As permissões e os SDKs
+devem ser conferidos no AAB efetivamente distribuído.
+
 ### Confirmação de cadastro por e-mail
 
 Novos cadastros precisam confirmar o e-mail antes do primeiro login. A tela de
