@@ -79,7 +79,10 @@ export default function Landing() {
           </div>
           <div className="text-sm text-muted">
             <p className="font-extrabold">Contato</p>
-            <p>contato@poupeazy.com</p>
+            <a href="mailto:poupeazy@gmail.com" className="hover:underline">poupeazy@gmail.com</a>
+            <p className="mt-3">
+              <Link to="/excluir-conta" className="font-semibold text-primary hover:underline">Excluir conta e dados</Link>
+            </p>
           </div>
         </div>
         <div className="border-t border-border-light py-4 text-center text-xs font-bold text-black/60">

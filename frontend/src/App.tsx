@@ -13,6 +13,7 @@ import Categories from './pages/Categories'
 import Goals from './pages/Goals'
 import Budget from './pages/Budget'
 import Integrations from './pages/Integrations'
+import DeleteAccount from './pages/DeleteAccount'
 
 // Guardião de rotas privadas:
 // só libera a renderização quando o estado de autenticação já foi resolvido.
@@ -69,6 +70,9 @@ export default function App() {
     // AuthProvider disponibiliza sessão, usuário e perfil para toda a árvore.
     <AuthProvider>
       <Routes>
+        {/* Disponível com ou sem sessão, inclusive fora do aplicativo móvel. */}
+        <Route path="/excluir-conta" element={<DeleteAccount />} />
+
         {/* Rotas de autenticação (acessíveis apenas sem sessão ativa). */}
         <Route element={<PublicRoute><AuthLayout /></PublicRoute>}>
           <Route path="/login" element={<Login />} />

@@ -102,6 +102,19 @@ O projeto está hospedado e disponível publicamente:
 | `/esqueci-senha`    | Formulário que dispara o token de reset via API        |
 | `/redefinir-senha`  | Página para definir a nova senha com o token           |
 
+### Exclusão de conta
+
+A rota pública `/excluir-conta` funciona com ou sem sessão e sem precisar instalar
+o aplicativo. O usuário informa e-mail, senha atual e a confirmação `EXCLUIR`.
+A página chama `POST /api/auth/delete-account`, que deve estar publicado no backend
+antes de disponibilizar o fluxo no site e na versão mobile.
+
+A exclusão remove a conta e seus dados associados da base ativa do PoupEazy. A
+página explica o alcance da remoção e oferece `poupeazy@gmail.com` como canal de
+solicitação/atendimento. Dados em serviços externos e cópias de segurança não são
+apagados automaticamente por esse formulário. O link também aparece no rodapé
+da página inicial e no Perfil do aplicativo mobile.
+
 ---
 
 ## Estrutura do Projeto

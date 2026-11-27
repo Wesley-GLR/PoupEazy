@@ -50,8 +50,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
-  // Sessao invalida/expirada: limpa o token para o app voltar ao login.
-  if (res.status === 401) {
+  // Uma falha em uma operação pública (login/exclusão com outra credencial)
+  // não deve encerrar a sessão que já está aberta no navegador.
+  if (res.status === 401 && auth) {
     clearToken()
   }
 
