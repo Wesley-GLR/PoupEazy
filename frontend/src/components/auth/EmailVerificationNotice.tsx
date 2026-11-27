@@ -5,9 +5,10 @@ import { api, ApiError } from '../../lib/api'
 interface Props {
   initialEmail?: string
   initialWait?: boolean
+  readOnlyEmail?: boolean
 }
 
-export default function EmailVerificationNotice({ initialEmail = '', initialWait = false }: Props) {
+export default function EmailVerificationNotice({ initialEmail = '', initialWait = false, readOnlyEmail = false }: Props) {
   const [email, setEmail] = useState(initialEmail)
   const [retryAt, setRetryAt] = useState(() => Date.now() + (initialWait ? 60000 : 0))
   const [now, setNow] = useState(Date.now)
@@ -56,7 +57,7 @@ export default function EmailVerificationNotice({ initialEmail = '', initialWait
       <MailCheck size={28} className="mb-3 text-primary" aria-hidden="true" />
       <p className="text-sm leading-relaxed text-text-dark">
         Confira a caixa de entrada e o spam. Abra o link recebido e clique em confirmar no site.
-        Depois, volte ao aplicativo ou ao login no navegador.
+        Depois da confirmação, volte ao PoupEazy.
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted">
         O link vale por 24 horas. Um novo envio substitui o link anterior.
@@ -64,7 +65,7 @@ export default function EmailVerificationNotice({ initialEmail = '', initialWait
       <form onSubmit={resend} className="mt-4 space-y-3" aria-busy={loading}>
         <label className="block text-xs font-semibold text-text-dark">
           E-mail para reenviar a confirmação
-          <input type="email" autoComplete="email" required maxLength={254} value={email} disabled={loading} onChange={event => { setEmail(event.target.value); setSent(false) }} className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+          <input type="email" autoComplete="email" required maxLength={254} value={email} readOnly={readOnlyEmail} disabled={loading} onChange={event => { setEmail(event.target.value); setSent(false) }} className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
         </label>
         {sent && <p role="status" className="text-sm leading-relaxed text-primary">Se houver uma conta pendente para esse endereço, você receberá um novo link de confirmação.</p>}
         {error && <p role="alert" className="text-sm text-red-800">{error}</p>}

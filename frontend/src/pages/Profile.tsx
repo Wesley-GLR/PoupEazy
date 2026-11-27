@@ -4,6 +4,7 @@ import { CheckCircle2, Eye, EyeOff, KeyRound, Trash2, UserRound } from 'lucide-r
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { ApiError } from '../lib/api'
+import EmailPreferences from '../components/profile/EmailPreferences'
 
 const inputClass = 'w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-text-dark outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-surface disabled:text-muted'
 const buttonClass = 'inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50'
@@ -160,6 +161,8 @@ export default function Profile() {
           </form>
         </section>
       </div>
+
+      <EmailPreferences />
 
       <section className="flex flex-col items-start gap-5 rounded-lg border border-border bg-surface-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between" aria-labelledby="delete-account-title">
         <div className="flex items-start gap-3">
