@@ -15,6 +15,7 @@ import Budget from './pages/Budget'
 import Integrations from './pages/Integrations'
 import DeleteAccount from './pages/DeleteAccount'
 import ConfirmEmail from './pages/ConfirmEmail'
+import Profile from './pages/Profile'
 
 // Guardião de rotas privadas:
 // só libera a renderização quando o estado de autenticação já foi resolvido.
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/metas" element={<Goals />} />
           <Route path="/orcamento" element={<Budget />} />
           <Route path="/integracoes" element={<Integrations />} />
+          <Route path="/perfil" element={<Profile />} />
         </Route>
 
         {/* Fallback de navegação: home inteligente + redirecionamento de rotas inválidas. */}
