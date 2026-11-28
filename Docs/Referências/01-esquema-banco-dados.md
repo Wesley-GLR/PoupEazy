@@ -46,10 +46,12 @@
    │   │  │ id (PK)          │
    │   │  │ id_usuario (FK)  │
    │   │  │ nome             │
+   │   │  │ descricao        │
    │   │  │ valor_objetivo   │
    │   │  │ valor_atual      │ ← Trigger: recalculado automaticamente
    │   │  │ data_limite      │
    │   │  │ status           │
+   │   │  │ criado_em        │
    │   │  └──────────────────┘
    │   │
    │   ▼
@@ -61,6 +63,7 @@
    │  │ ano              │
    │  │ valor_planejado  │
    │  │ valor_real       │ ← Trigger: recalculado automaticamente
+   │  │ criado_em        │
    │  │ atualizado_em    │
    │  └──────────────────┘
    │
@@ -73,8 +76,10 @@
 │ access_token_enc     │     │ titulo           │
 │ refresh_token_enc    │     │ mensagem         │
 │ expira_em            │     │ lida (bool)      │
-│ ativo (bool)         │     │ criado_em        │
-└──────────────────────┘     └──────────────────┘
+│ ultimo_uso           │     │ criado_em        │
+│ ativo (bool)         │     └──────────────────┘
+│ criado_em            │
+└──────────────────────┘
 ```
 
 ---

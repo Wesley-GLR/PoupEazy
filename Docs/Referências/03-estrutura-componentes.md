@@ -26,6 +26,7 @@ src/
 │       └── BarChart.tsx        # Gráfico de barras (Recharts)
 │
 ├── pages/
+│   ├── Landing.tsx             # Landing page (visitantes)
 │   ├── Login.tsx               # Tela de login
 │   ├── Register.tsx            # Tela de cadastro
 │   ├── Dashboard.tsx           # Painel principal
@@ -35,7 +36,7 @@ src/
 │   └── Budget.tsx              # Orçamentos mensais
 │
 ├── hooks/
-│   ├── useAuth.ts              # Autenticação e sessão
+│   ├── useAuth.tsx             # Autenticação e sessão
 │   ├── useTransactions.ts      # CRUD de transações
 │   ├── useBudget.ts            # CRUD de orçamentos
 │   ├── useGoals.ts             # CRUD de metas
@@ -43,7 +44,7 @@ src/
 │
 ├── lib/
 │   ├── supabase.ts             # Cliente Supabase
-│   └── formatters.ts           # Formatadores (moeda, data)
+│   └── format.ts               # Formatadores (moeda, data)
 │
 └── types/
     └── database.ts             # Interfaces TypeScript
@@ -55,15 +56,19 @@ src/
 
 | Rota | Página | Acesso | Descrição |
 |------|--------|--------|-----------|
+| `/` | Landing.tsx | Público | Landing page (redireciona para `/dashboard` se autenticado) |
 | `/login` | Login.tsx | Público | Tela de login |
-| `/register` | Register.tsx | Público | Tela de cadastro |
-| `/` | Dashboard.tsx | Autenticado | Painel principal |
-| `/transactions` | Transactions.tsx | Autenticado | Transações |
-| `/categories` | Categories.tsx | Autenticado | Categorias |
-| `/goals` | Goals.tsx | Autenticado | Metas |
-| `/budget` | Budget.tsx | Autenticado | Orçamentos |
+| `/cadastro` | Register.tsx | Público | Tela de cadastro |
+| `/dashboard` | Dashboard.tsx | Autenticado | Painel principal |
+| `/transacoes` | Transactions.tsx | Autenticado | Transações |
+| `/categorias` | Categories.tsx | Autenticado | Categorias |
+| `/metas` | Goals.tsx | Autenticado | Metas |
+| `/orcamento` | Budget.tsx | Autenticado | Orçamentos |
 
-**Proteção de rotas:** Componente `ProtectedRoute` em `App.tsx` redireciona para `/login` se não autenticado.
+**Proteção de rotas:** `App.tsx` define três guardiões de rota:
+- `ProtectedRoute` — redireciona para `/login` se não autenticado
+- `PublicRoute` — redireciona para `/dashboard` se já autenticado (usado em `/login` e `/cadastro`)
+- `LandingRoute` — exibe landing page para visitantes ou redireciona para `/dashboard`
 
 ---
 

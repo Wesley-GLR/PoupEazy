@@ -49,23 +49,9 @@ A meta aparecerá com a barra de progresso em **0%** e status **Ativa**.
 
 ---
 
-## Passo 3 — Vincular transações à meta
+## Passo 3 — Como as transações alimentam as metas
 
-Para que o progresso da meta seja atualizado, vincule transações a ela:
-
-1. Vá para **💳 Transações**
-2. Crie uma nova transação (ou edite uma existente):
-
-   | Campo | Valor |
-   |-------|-------|
-   | **Tipo** | Despesa |
-   | **Descrição** | Depósito poupança — fundo emergência |
-   | **Valor** | 500.00 |
-   | **Data** | 10/05/2026 |
-   | **Categoria** | Outros |
-   | **Meta** | Fundo de Emergência |
-
-3. Salve a transação
+O vínculo entre transações e metas é feito pelo campo `id_metas` na tabela `despesas`. Atualmente, a interface web define `id_metas = null` ao criar transações pelo formulário, mas o banco de dados suporta o vínculo e o trigger `trg_metas_valor_atual` recalcula automaticamente o `valor_atual` da meta quando transações são associadas (por exemplo, via SQL ou integrações futuras como o chatbot WhatsApp).
 
 ---
 
